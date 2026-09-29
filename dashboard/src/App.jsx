@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Login from './components/Login';
+import Signup from './components/Signup';
 import { authApi } from './api/api';
 import { DashboardLayout } from './components/layout';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -10,6 +11,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 const OverviewPage = lazy(() => import('./pages/OverviewPage').then(m => ({ default: m.OverviewPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const PendingApprovalsPage = lazy(() => import('./pages/PendingApprovalsPage').then(m => ({ default: m.PendingApprovalsPage })));
 
 const pageFallback = (
     <div style={{ height: '60vh', display: 'grid', placeItems: 'center' }}>Loading…</div>
@@ -17,6 +19,7 @@ const pageFallback = (
 
 function AuthGate() {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [authView, setAuthView] = useState('login'); // 'login' | 'signup'
     const queryClient = useQueryClient();
 
     useEffect(() => {
@@ -58,7 +61,20 @@ function AuthGate() {
     }
 
     if (!isAuthenticated) {
-        return <Login onLoginSuccess={handleLoginSuccess} />;
+        if (authView === 'signup') {
+            return (
+                <Signup
+                    onSignupSuccess={() => setAuthView('login')}
+                    onToggleLogin={() => setAuthView('login')}
+                />
+            );
+        }
+        return (
+            <Login
+                onLoginSuccess={handleLoginSuccess}
+                onToggleSignup={() => setAuthView('signup')}
+            />
+        );
     }
 
     return (
@@ -66,6 +82,7 @@ function AuthGate() {
             <Suspense fallback={pageFallback}>
                 <Routes>
                     <Route path="/" element={<OverviewPage />} />
+                    <Route path="/approvals" element={<PendingApprovalsPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

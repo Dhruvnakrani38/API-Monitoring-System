@@ -4,7 +4,7 @@ import { authApi } from '../api/api';
 import { UserPlus, Mail, Lock, User, Loader2, CheckCircle } from 'lucide-react';
 import styles from '../styles/modules/Login.module.scss';
 
-function Signup({ onSignupSuccess }) {
+function Signup({ onSignupSuccess, onToggleLogin }) {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -200,7 +200,7 @@ function Signup({ onSignupSuccess }) {
                             Already have an account?{' '}
                             <button
                                 type="button"
-                                onClick={() => window.location.href = '/login'}
+                                onClick={onToggleLogin || (() => window.location.href = '/login')}
                                 className={styles.switchButton}
                             >
                                 Sign In

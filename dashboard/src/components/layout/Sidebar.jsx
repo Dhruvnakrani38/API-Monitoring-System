@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import {
     LayoutDashboard,
     Settings,
+    ShieldCheck,
     Zap,
 } from 'lucide-react';
 import styles from '../../styles/modules/layout/Sidebar.module.scss';
@@ -13,6 +14,12 @@ const navItems = [
         href: '/',
         icon: LayoutDashboard,
         description: 'Main dashboard view'
+    },
+    {
+        title: 'User Approvals',
+        href: '/approvals',
+        icon: ShieldCheck,
+        description: 'Approve client registrations'
     },
 ];
 

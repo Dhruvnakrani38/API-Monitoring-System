@@ -111,6 +111,26 @@ function Login({ onLoginSuccess }) {
                             </div>
                         </button>
                     </form>
+
+                    {onToggleSignup && (
+                        <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary, #94a3b8)' }}>
+                            Don't have an account?{' '}
+                            <button
+                                type="button"
+                                onClick={onToggleSignup}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    color: 'var(--accent-color, #6366f1)',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline'
+                                }}
+                            >
+                                Sign Up
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

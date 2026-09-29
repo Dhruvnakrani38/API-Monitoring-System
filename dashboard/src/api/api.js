@@ -45,6 +45,18 @@ export const authApi = {
         const response = await api.put('/auth/profile', profileData);
         return response.data;
     },
+    getPendingUsers: async () => {
+        const response = await api.get('/auth/admin/pending-users');
+        return response.data;
+    },
+    approveUser: async (userId) => {
+        const response = await api.post(`/auth/admin/users/${userId}/approve`);
+        return response.data;
+    },
+    rejectUser: async (userId) => {
+        const response = await api.post(`/auth/admin/users/${userId}/reject`);
+        return response.data;
+    },
 };
 
 export const analyticsApi = {
