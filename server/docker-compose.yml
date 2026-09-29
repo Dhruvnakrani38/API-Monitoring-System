@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_DB: api_monitoring
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: rahul
+      POSTGRES_PASSWORD: dhruv@123
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     ports:
       - "5432:5432"
@@ -37,7 +37,7 @@ services:
     container_name: api-monitoring-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: api_user
-      RABBITMQ_DEFAULT_PASS: secure_password
+      RABBITMQ_DEFAULT_PASS: dhruv@123
       RABBITMQ_DEFAULT_VHOST: api_monitoring
     ports:
       - "5672:5672" # AMQP port
@@ -59,7 +59,7 @@ services:
     container_name: api-monitoring-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_PASSWORD: dhruv@123
     ports:
       - "8081:80"
     volumes:
@@ -86,12 +86,12 @@ services:
       PG_PORT: 5432
       PG_DATABASE: api_monitoring
       PG_USER: postgres
-      PG_PASSWORD: rahul
+      PG_PASSWORD: dhruv@123
       # RabbitMQ (Docker container)
-      RABBITMQ_URL: amqp://api_user:secure_password@rabbitmq:5672/api_monitoring
+      RABBITMQ_URL: amqp://api_user:dhruv@123@rabbitmq:5672/api_monitoring
       RABBITMQ_QUEUE: api_hits
       # Security
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: d65f785253c7e523944114b3499e690ffb049fe18f7dbfbf68891f273d02f19e36f799d4266df480e52c3cec6590f85560c199f79bbd78a38bb313a0446e70a4
       JWT_EXPIRES_IN: 24h
       # Rate Limiting
       RATE_LIMIT_WINDOW_MS: 60000
@@ -128,12 +128,12 @@ services:
       PG_PORT: 5432
       PG_DATABASE: api_monitoring
       PG_USER: postgres
-      PG_PASSWORD: rahul
+      PG_PASSWORD: dhruv@123
       # RabbitMQ (Docker container)
-      RABBITMQ_URL: amqp://api_user:secure_password@rabbitmq:5672/api_monitoring
+      RABBITMQ_URL: amqp://api_user:dhruv@123@rabbitmq:5672/api_monitoring
       RABBITMQ_QUEUE: api_hits
       # Security
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: d65f785253c7e523944114b3499e690ffb049fe18f7dbfbf68891f273d02f19e36f799d4266df480e52c3cec6590f85560c199f79bbd78a38bb313a0446e70a4
     volumes:
       - ./logs:/app/logs
     networks:
