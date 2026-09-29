@@ -98,6 +98,53 @@ class MongoUserRepository extends BaseRepository {
             throw error;
         }
     }
+
+    /**
+     * Finds users by approval status.
+     * @param {string} status - The approval status to filter by.
+     * @returns {Promise<Array>} - Returns an array of user objects with the specified status.
+     */
+    async findByApprovalStatus(status) {
+        try {
+            const users = await this.model.find({ approvalStatus: status }).select("-password")
+            return users
+        } catch (error) {
+            logger.error("Error finding users by approval status", error)
+            throw error;
+        }
+    }
+
+    /**
+     * Updates a user by their ID.
+     * @param {string} userId - The ID of the user to update.
+     * @param {Object} updateData - The data to update.
+     * @returns {Promise<Object>} - Returns the updated user object.
+     */
+    async update(userId, updateData) {
+        try {
+            const user = await this.model.findByIdAndUpdate(userId, updateData, { new: true })
+            return user
+        } catch (error) {
+            logger.error("Error updating user", error)
+            throw error;
+        }
+    }
+
+    /**
+     * Updates a user by their ID and returns the updated user without password.
+     * @param {string} userId - The ID of the user to update.
+     * @param {Object} updateData - The data to update.
+     * @returns {Promise<Object>} - Returns the updated user object without password.
+     */
+    async updateSafe(userId, updateData) {
+        try {
+            const user = await this.model.findByIdAndUpdate(userId, updateData, { new: true }).select("-password")
+            return user
+        } catch (error) {
+            logger.error("Error updating user safely", error)
+            throw error;
+        }
+    }
 }
 
 export default new MongoUserRepository()

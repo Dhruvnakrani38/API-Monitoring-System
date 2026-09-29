@@ -65,13 +65,37 @@ const userSchema = new mongoose.Schema({
     clientId: {
         type: mongoose.Schema.Types.ObjectId, // 123
         ref: "Client",
-        required: function () {
-            return this.role !== "super_admin"
-        }
+        required: false // Made optional to support pending users
     },
     isActive: {
         type: Boolean,
         default: true,
+    },
+    isApproved: {
+        type: Boolean,
+        default: function() {
+            return this.role === 'super_admin';
+        }
+    },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: function() {
+            return this.role === 'super_admin' ? 'approved' : 'pending';
+        }
+    },
+    approvedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
+    approvedAt: {
+        type: Date,
+        default: null
+    },
+    rejectionReason: {
+        type: String,
+        default: null
     },
     permissions: {
         canCreateApiKeys: {

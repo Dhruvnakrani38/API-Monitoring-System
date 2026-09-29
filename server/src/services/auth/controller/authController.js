@@ -7,12 +7,13 @@ import ResponseFormatter from "../../../shared/utils/responseFormatter.js"
  * It interacts with the AuthService to perform these operations and formats the responses using ResponseFormatter.
  */
 export class AuthController {
-    constructor(authService) {
+    constructor(authService, clientService) {
         if (!authService) {
             throw new Error("authService is Required");
         }
 
         this.authService = authService
+        this.clientService = clientService
     };
 
     /**
@@ -44,7 +45,28 @@ export class AuthController {
     };
 
     /**
-     * Registers a new user.
+     * Public signup for new users (requires admin approval).
+     * @param {Request} req - The request object containing user details.
+     * @param {Response} res - The response object used to send the response.
+     * @param {Function} next - The next middleware function in the request-response cycle.
+     */
+    async publicSignup(req, res, next) {
+        try {
+            const { username, email, password } = req.body;
+            const userData = {
+                username, email, password
+            };
+
+            const { user, message } = await this.authService.publicSignup(userData);
+
+            res.status(201).json(ResponseFormatter.success(user, message, 201))
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    /**
+     * Registers a new user (admin only - no approval needed).
      * @param {Request} req - The request object containing user details.
      * @param {Response} res - The response object used to send the response.
      * @param {Function} next - The next middleware function in the request-response cycle.
@@ -120,6 +142,54 @@ export class AuthController {
         try {
             res.clearCookie("authToken")
             res.status(200).json(ResponseFormatter.success({}, "Logout successful", 200))
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    /**
+     * Approves a pending user registration.
+     * @param {Request} req - The request object containing user ID.
+     * @param {Response} res - The response object used to send the response.
+     * @param {Function} next - The next middleware function in the request-response cycle.
+     */
+    async approveUser(req, res, next) {
+        try {
+            const { userId } = req.params;
+            const result = await this.authService.approveUser(userId, req.user, this.clientService);
+            res.status(200).json(ResponseFormatter.success(result, "User approved with client and API key", 200))
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    /**
+     * Rejects a pending user registration.
+     * @param {Request} req - The request object containing user ID and rejection reason.
+     * @param {Response} res - The response object used to send the response.
+     * @param {Function} next - The next middleware function in the request-response cycle.
+     */
+    async rejectUser(req, res, next) {
+        try {
+            const { userId } = req.params;
+            const { reason } = req.body;
+            const user = await this.authService.rejectUser(userId, reason, req.user);
+            res.status(200).json(ResponseFormatter.success(user, "User rejected successfully", 200))
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    /**
+     * Gets all pending user registrations.
+     * @param {Request} req - The request object.
+     * @param {Response} res - The response object used to send the response.
+     * @param {Function} next - The next middleware function in the request-response cycle.
+     */
+    async getPendingUsers(req, res, next) {
+        try {
+            const users = await this.authService.getPendingUsers();
+            res.status(200).json(ResponseFormatter.success(users, "Pending users fetched successfully", 200))
         } catch (error) {
             next(error)
         }

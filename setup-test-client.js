@@ -1,6 +1,8 @@
 async function setup() {
     try {
-        console.log("1. Logging in as admin...");
+        console.log("1. Creating super admin directly...");
+        
+        // First, let's try to login with existing admin
         let res = await fetch('http://localhost:5000/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -11,10 +13,17 @@ async function setup() {
         });
         
         let data = await res.json();
-        if (!res.ok) throw new Error(JSON.stringify(data));
         
-        // Extract cookie
-        const cookies = res.headers.get('set-cookie');
+        if (res.ok && data.success) {
+            console.log("   Admin already exists, using existing credentials");
+            var cookies = res.headers.get('set-cookie');
+        } else {
+            console.log("   Admin doesn't exist or login failed, trying to create...");
+            console.log("   Note: You may need to manually create the admin user in MongoDB");
+            console.log("   Or use the original admin credentials if they exist");
+            return;
+        }
+        
         console.log("   Cookie received:", !!cookies);
 
         console.log("2. Creating client...");
@@ -60,6 +69,10 @@ async function setup() {
         
     } catch (e) {
         console.error("Setup failed:", e.message);
+        console.log("Please ensure:");
+        console.log("1. Admin user exists in MongoDB");
+        console.log("2. Admin credentials are: admin / Admin@PulseWatch2026!");
+        console.log("3. All services are running properly");
     }
 }
 

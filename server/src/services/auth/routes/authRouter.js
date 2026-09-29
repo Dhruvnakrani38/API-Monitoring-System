@@ -17,6 +17,14 @@ router.post("/onboard-super-admin",
     (req, res, next) => authController.onboardSuperAdmin(req, res, next)
 )
 
+// Public signup - no authentication required
+router.post("/signup",
+    requestLogger,
+    validate(registrationSchema),
+    (req, res, next) => authController.publicSignup(req, res, next)
+)
+
+// Admin-only user registration
 router.post("/register",
     requestLogger,
     authenticate,
@@ -40,6 +48,28 @@ router.get("/profile",
 router.get("/logout",
     requestLogger,
     (req, res, next) => authController.logout(req, res, next)
+)
+
+// Admin approval routes
+router.get("/admin/pending-users",
+    requestLogger,
+    authenticate,
+    authorize([APPLICATION_ROLES.SUPER_ADMIN]),
+    (req, res, next) => authController.getPendingUsers(req, res, next)
+)
+
+router.post("/admin/users/:userId/approve",
+    requestLogger,
+    authenticate,
+    authorize([APPLICATION_ROLES.SUPER_ADMIN]),
+    (req, res, next) => authController.approveUser(req, res, next)
+)
+
+router.post("/admin/users/:userId/reject",
+    requestLogger,
+    authenticate,
+    authorize([APPLICATION_ROLES.SUPER_ADMIN]),
+    (req, res, next) => authController.rejectUser(req, res, next)
 )
 
 export default router

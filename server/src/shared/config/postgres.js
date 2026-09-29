@@ -11,16 +11,27 @@ class PostgresConnection {
 
     getPool() {
         if (!this.pool) {
-            this.pool = new Pool({
-                host: config.postgres.host,
-                port: config.postgres.port,
-                database: config.postgres.database,
-                user: config.postgres.user,
-                password: config.postgres.password,
-                max: 20,
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 2000,
-            })
+            const poolOptions = config.postgres.connectionString
+                ? {
+                    connectionString: config.postgres.connectionString,
+                    ssl: config.postgres.ssl ? { rejectUnauthorized: false } : false,
+                    max: 20,
+                    idleTimeoutMillis: 30000,
+                    connectionTimeoutMillis: 10000,
+                }
+                : {
+                    host: config.postgres.host,
+                    port: config.postgres.port,
+                    database: config.postgres.database,
+                    user: config.postgres.user,
+                    password: config.postgres.password,
+                    ssl: config.postgres.ssl ? { rejectUnauthorized: false } : false,
+                    max: 20,
+                    idleTimeoutMillis: 30000,
+                    connectionTimeoutMillis: 10000,
+                };
+
+            this.pool = new Pool(poolOptions);
 
             this.pool.on("error", err => {
                 logger.error("Unexpected error on idle PG client", err)

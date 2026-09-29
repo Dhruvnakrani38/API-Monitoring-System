@@ -1,0 +1,200 @@
+# Production Docker Compose for Oracle Cloud Always Free
+# Optimized for limited resources (1 OCPU, 1GB RAM)
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: api-monitoring-postgres
+    environment:
+      POSTGRES_DB: api_monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dhruv@123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "127.0.0.1:5432:5432"  # Bind to localhost only for security
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init-postgres.sql
+    networks:
+      - api-monitoring-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d api_monitoring"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  mongo:
+    image: mongo:6.0
+    container_name: api-monitoring-mongo
+    ports:
+      - "127.0.0.1:27018:27017"  # Bind to localhost only
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - api-monitoring-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: api-monitoring-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: api_user
+      RABBITMQ_DEFAULT_PASS: dhruv@123
+      RABBITMQ_DEFAULT_VHOST: api_monitoring
+    ports:
+      - "127.0.0.1:5672:5672"      # AMQP port - localhost only
+      - "127.0.0.1:15672:15672"    # Management UI - localhost only
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - api-monitoring-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  pgadmin:
+    image: dpage/pgadmin4:7
+    container_name: api-monitoring-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: dhruv@123
+    ports:
+      - "127.0.0.1:8081:80"  # Bind to localhost only
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - api-monitoring-network
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  api-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-monitoring-app
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      # MongoDB (local container)
+      MONGO_URI: mongodb://mongo:27017/api_monitoring
+      MONGO_DB_NAME: api_monitoring
+      # PostgreSQL (Docker container)
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: api_monitoring
+      PG_USER: postgres
+      PG_PASSWORD: dhruv@123
+      # RabbitMQ (Docker container)
+      RABBITMQ_URL: amqp://api_user:dhruv@123@rabbitmq:5672/api_monitoring
+      RABBITMQ_QUEUE: api_hits
+      # Security
+      JWT_SECRET: d65f785253c7e523944114b3499e690ffb049fe18f7dbfbf68891f273d02f19e36f799d4266df480e52c3cec6590f85560c199f79bbd78a38bb313a0446e70a4
+      JWT_EXPIRES_IN: 24h
+      # Rate Limiting (conservative for limited resources)
+      RATE_LIMIT_WINDOW_MS: 60000
+      RATE_LIMIT_MAX_REQUESTS: 50  # Reduced from 100 for resource constraints
+    ports:
+      - "127.0.0.1:5000:5000"  # Bind to localhost only - accessed via nginx
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - api-monitoring-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    container_name: api-monitoring-consumer
+    environment:
+      NODE_ENV: production
+      # MongoDB (local container)
+      MONGO_URI: mongodb://mongo:27017/api_monitoring
+      MONGO_DB_NAME: api_monitoring
+      # PostgreSQL (Docker container)
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: api_monitoring
+      PG_USER: postgres
+      PG_PASSWORD: dhruv@123
+      # RabbitMQ (Docker container)
+      RABBITMQ_URL: amqp://api_user:dhruv@123@rabbitmq:5672/api_monitoring
+      RABBITMQ_QUEUE: api_hits
+      # Security
+      JWT_SECRET: d65f785253c7e523944114b3499e690ffb049fe18f7dbfbf68891f273d02f19e36f799d4266df480e52c3cec6590f85560c199f79bbd78a38bb313a0446e70a4
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - api-monitoring-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+  mongo_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  api-monitoring-network:
+    driver: bridge

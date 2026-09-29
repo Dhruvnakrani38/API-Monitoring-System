@@ -4,6 +4,7 @@ import { APPLICATION_ROLES, isValidClientRole } from "../../../shared/constants/
 import AppError from "../../../shared/utils/AppError.js";
 import { v4 as uudiv4 } from "uuid";
 import crypto from 'crypto';
+import User from "../../../shared/models/User.js";
 
 /**
  * ClientService class to handle business logic related to clients
@@ -97,6 +98,52 @@ export class ClientService {
             throw error;
         }
     };
+
+    /**
+     * Create a client and generate API key for an approved user
+     * @param {Object} userData - The approved user data
+     * @param {Object} adminUser - The admin user approving
+     * @returns {Object} - The created client and API key
+     */
+    async createClientWithApiKeyForUser(userData, adminUser) {
+        try {
+            // Create client from user data
+            const clientData = {
+                name: userData.username + "'s Client",
+                email: userData.email,
+                description: "Auto-generated client for approved user",
+                website: ""
+            };
+
+            const client = await this.createClient(clientData, adminUser);
+
+            // Update user with clientId using the User model directly
+            await User.findByIdAndUpdate(userData._id, { clientId: client._id });
+
+            // Generate API key for the new client
+            const keyData = {
+                name: "Default API Key",
+                description: "Auto-generated API key for approved user",
+                environment: "production"
+            };
+
+            const apiKey = await this.createApiKey(client._id, keyData, adminUser);
+
+            logger.info("Client and API key created for approved user", {
+                userId: userData._id,
+                clientId: client._id,
+                apiKey: apiKey.keyId
+            });
+
+            return {
+                client,
+                apiKey
+            };
+        } catch (error) {
+            logger.error('Error creating client with API key for user:', error);
+            throw error;
+        }
+    }
 
     /**
      * Check if a user has access to a specific client
