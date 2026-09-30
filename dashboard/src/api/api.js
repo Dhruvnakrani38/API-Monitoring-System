@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+/**
+ * 🌐 Global Frontend API Base URL Configuration
+ * Kaam: Environment variable (`VITE_API_BASE_URL`) ya relative `/api` path pick karta hai.
+ * Usage: Vercel rewrite proxy ya custom backend URL set karne ke liye.
+ */
 const API_BASE_URL = import.meta?.env?.VITE_API_BASE_URL ?? '/api';
 
+/**
+ * ⚡ Axios Shared Instance
+ * Kaam: Cross-origin HTTP requests me Credentials (Cookies) send karne ke liye setup.
+ * Reusable: App me saare API calls isi `api` instance ke through hoti hain.
+ */
 const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -9,6 +19,11 @@ const api = axios.create({
     },
     withCredentials: true,
 });
+
+/**
+ * 🚨 Axios Response Interceptor (Auth Token Expiry Handler)
+ * Kaam: Agar API response 401 Unauthorized return kare, to global `auth:unauthorized` event dispatch karke client ko automatically login screen par bhejta hai.
+ */
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -20,6 +35,11 @@ api.interceptors.response.use(
     }
 );
 
+/**
+ * 🔐 Authentication & Admin Approval API Helper Object
+ * Kaam: Login, Signup, Profile, Pending Approvals, aur User Approve/Reject endpoints calls.
+ * Reusable: React Query / Components (Login.jsx, Signup.jsx, PendingApprovalsPage.jsx) me reusable.
+ */
 export const authApi = {
     login: async (credentials) => {
         const response = await api.post('/auth/login', credentials);
@@ -45,6 +65,7 @@ export const authApi = {
         const response = await api.put('/auth/profile', profileData);
         return response.data;
     },
+    // Admin Pending Approvals APIs
     getPendingUsers: async () => {
         const response = await api.get('/auth/admin/pending-users');
         return response.data;

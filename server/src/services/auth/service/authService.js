@@ -1,14 +1,15 @@
 import config from "../../../shared/config/index.js";
 import AppError from "../../../shared/utils/AppError.js";
 import jwt from "jsonwebtoken";
-import logger from "../../../shared/config/logger.js"
+import logger from "../../../shared/config/logger.js";
 import bcrypt from "bcryptjs";
 import { APPLICATION_ROLES } from "../../../shared/constants/roles.js";
 import User from "../../../shared/models/User.js";
 
 /**
- * AuthService handles user authentication and authorization related operations such as onboarding super admin, user registration, login, and fetching user profile.
- * It interacts with the UserRepository to perform these operations and generates JWT tokens for authenticated users.
+ * 🔐 AuthService Class
+ * Kaam: Authentication aur Authorization operations handle karta hai - Onboarding, Registration, Public Signup, Admin Approvals, Login, aur JWT Token Generation.
+ * Reusable: Express Controllers (authController.js) dwara use hota hai. Business logic centralized hai.
  */
 export class AuthService {
     constructor(userRepository) {
@@ -16,12 +17,12 @@ export class AuthService {
             throw new Error("UserRepository is Required");
         }
         this.userRepository = userRepository;
-    };
+    }
 
     /**
-     * Generates a JWT token for the given user.
-     * @param {Object} user - The user object for which the token is generated.
-     * @returns {string} - The generated JWT token.
+     * 🔑 JWT Token Generator Function
+     * Kaam: User payload (userId, email, role, clientId) se Signed JWT Token generate karta hai.
+     * Reusable: Login/Signup ke baad Auth Cookies ya Authorization Headers me bhejane ke liye reusable.
      */
     generateToken(user) {
         const { _id, email, username, role, clientId } = user;
@@ -32,38 +33,34 @@ export class AuthService {
             email,
             role,
             clientId
-        }
+        };
 
         return jwt.sign(payload, config.jwt.secret, {
             expiresIn: config.jwt.expiresIn
-        })
+        });
     }
 
     /**
-     * Formats the user object for response by removing sensitive information.
-     * @param {Object} user - The user object to be formatted.
-     * @returns {Object} - The formatted user object.
+     * 🧹 Sensitive Data Cleaner
+     * Kaam: Client ko user details bhejte waqt password hash drop/delete karta hai.
      */
     formatUserForResponse(user) {
         const userObj = user.toObject ? user.toObject() : { ...user };
         delete userObj.password;
         return userObj;
-    };
-
-    /**
-     * Compares the user-entered password with the hashed password.
-     * @param {string} userEnteredPassword - The password entered by the user.
-     * @param {string} hashedPassword - The hashed password stored in the database.
-     * @returns {Promise<boolean>} - Returns true if the passwords match, otherwise false.
-     */
-    async comparePassword(userEnteredPassword, hashedPassword) {
-        return await bcrypt.compare(userEnteredPassword, hashedPassword)
     }
 
     /**
-     * Onboards a new super admin user.
-     * @param {Object} superAdminData - The data of the super admin to be onboarded.
-     * @returns {Promise<Object>} - Returns an object containing the user and token.
+     * 🔒 Password Hash Matcher
+     * Kaam: Bcrypt se Plaintext Password aur Stored Hashed Password Compare karta hai.
+     */
+    async comparePassword(userEnteredPassword, hashedPassword) {
+        return await bcrypt.compare(userEnteredPassword, hashedPassword);
+    }
+
+    /**
+     * 👑 Super Admin Setup Function (First Time Bootstrap)
+     * Kaam: Agar system me koi user nahi hai, to pehla Super Admin account create karta hai.
      */
     async onboardSuperAdmin(superAdminData) {
         try {
@@ -83,76 +80,75 @@ export class AuthService {
 
             logger.info("Admin onboarded successfully", {
                 username: user.username
-            })
+            });
 
             return {
                 user: this.formatUserForResponse(user),
                 token
-            }
+            };
         } catch (error) {
-            logger.error("Error in onboarding Super admin", error)
-            throw error
+            logger.error("Error in onboarding Super admin", error);
+            throw error;
         }
-    };
+    }
 
     /**
-     * Registers a new user (public signup - requires admin approval).
-     * @param {Object} userData - The data of the user to be registered.
-     * @returns {Promise<Object>} - Returns the created user (no token until approved).
+     * 📝 Public Client Signup Method (Approval Required Flow)
+     * Kaam: Naye users ko `approvalStatus: 'pending'` aur `isActive: false` ke sath create karta hai.
+     * Usage: Public `/api/auth/signup` route se call hota hai. Jab tak Admin approve nahi karta, login blocked rehta hai.
      */
     async publicSignup(userData) {
         try {
-            const existingUser = await this.userRepository.findByUsername(userData.username)
+            const existingUser = await this.userRepository.findByUsername(userData.username);
             if (existingUser) {
-                throw new AppError("Username already exists", 409)
-            };
+                throw new AppError("Username already exists", 409);
+            }
 
-            const existingEmail = await this.userRepository.findByEmail(userData.email)
+            const existingEmail = await this.userRepository.findByEmail(userData.email);
             if (existingEmail) {
-                throw new AppError("Email already exists", 409)
-            };
+                throw new AppError("Email already exists", 409);
+            }
 
-            // Create user with pending approval status
+            // User account create in PENDING state (Approval needed)
             const user = await this.userRepository.create({
                 ...userData,
                 role: APPLICATION_ROLES.CLIENT_VIEWER,
                 isApproved: false,
                 approvalStatus: 'pending',
-                isActive: false, // Inactive until approved
-                clientId: null // No client until approved
+                isActive: false, // Inactive until Admin approval
+                clientId: null
             });
 
             logger.info("User signup successful - awaiting approval", {
                 username: user.username,
                 email: user.email
-            })
+            });
 
             return {
                 user: this.formatUserForResponse(user),
                 message: "Account created successfully. Please wait for admin approval."
-            }
+            };
         } catch (error) {
-            logger.error("Error in public signup service", error)
-            throw error
+            logger.error("Error in public signup service", error);
+            throw error;
         }
-    };
+    }
 
     /**
-     * Registers a new user (admin only - no approval needed).
-     * @param {Object} userData - The data of the user to be registered.
-     * @returns {Promise<Object>} - Returns an object containing the user and token.
+     * ➕ Admin Direct User Register Method
+     * Kaam: Admin dwara directly pre-approved user account create karne ke liye.
      */
     async register(userData) {
         try {
-            const existingUser = await this.userRepository.findByUsername(userData.username)
+            const existingUser = await this.userRepository.findByUsername(userData.username);
             if (existingUser) {
-                throw new AppError("Username already exists", 409)
-            };
+                throw new AppError("Username already exists", 409);
+            }
 
-            const existingEmail = await this.userRepository.findByEmail(userData.email)
+            const existingEmail = await this.userRepository.findByEmail(userData.email);
             if (existingEmail) {
-                throw new AppError("Email already exists", 409)
-            };
+                throw new AppError("Email already exists", 409);
+            }
 
             const user = await this.userRepository.create({
                 ...userData,
@@ -164,23 +160,22 @@ export class AuthService {
 
             logger.info("User registered successfully", {
                 username: user.username
-            })
+            });
 
             return {
                 user: this.formatUserForResponse(user),
                 token
-            }
+            };
         } catch (error) {
-            logger.error("Error in Register service", error)
-            throw error
+            logger.error("Error in Register service", error);
+            throw error;
         }
-    };
+    }
 
     /**
-     * Logs in a user.
-     * @param {string} username - The username of the user.
-     * @param {string} password - The password of the user.
-     * @returns {Promise<Object>} - Returns an object containing the user and token.
+     * 🔓 User Login Authentication Method
+     * Kaam: Credentials verify karta hai aur check karta hai ki user Admin dwara Approved aur Active hai ya nahi.
+     * Usage: Public `/api/auth/login` route. Approved hone par JWT cookie/token return karta hai.
      */
     async login(username, password) {
         try {
@@ -188,9 +183,9 @@ export class AuthService {
 
             if (!user) {
                 throw new AppError("Invalid Credentials", 401);
-            };
+            }
 
-            // Check if user is approved (super admins bypass approval check)
+            // Non-SuperAdmin users ke liye approval verification
             if (user.role !== APPLICATION_ROLES.SUPER_ADMIN) {
                 if (!user.isApproved || user.approvalStatus !== 'approved') {
                     throw new AppError("Account pending admin approval. Please contact support.", 403);
@@ -207,26 +202,23 @@ export class AuthService {
             }
             const token = this.generateToken(user);
 
-            logger.info("User loggedIn successfully", { username: user.username })
+            logger.info("User loggedIn successfully", { username: user.username });
 
             return {
                 user: this.formatUserForResponse(user),
                 token
-            }
+            };
 
         } catch (error) {
-            logger.error("Error in Login service", error)
-            throw error
+            logger.error("Error in Login service", error);
+            throw error;
         }
-    };
-
+    }
 
     /**
-     * Approves a pending user registration and creates client + API key.
-     * @param {string} userId - The ID of the user to approve.
-     * @param {Object} adminUser - The admin user approving the registration.
-     * @param {Object} clientService - The client service instance.
-     * @returns {Promise<Object>} - Returns the approved user with client and API key.
+     * ✅ Admin User Approval & Auto Client Setup Method
+     * Kaam: Pending user ko Approve karta hai, automatically Client Workspace aur API Key (`apim_...`) generate karta hai.
+     * Usage: Admin Dashboard (`/api/auth/admin/users/:userId/approve`) dwara invoke hota hai.
      */
     async approveUser(userId, adminUser, clientService) {
         try {
@@ -239,7 +231,7 @@ export class AuthService {
                 throw new AppError("User already approved", 400);
             }
 
-            // Update user approval status
+            // 1. User approval status update in DB
             const updatedUser = await this.userRepository.updateSafe(userId, {
                 isApproved: true,
                 approvalStatus: 'approved',
@@ -248,10 +240,10 @@ export class AuthService {
                 approvedAt: new Date()
             });
 
-            // Create client and API key for the approved user
+            // 2. Client Workspace & API Key Auto-Generation
             const { client, apiKey } = await clientService.createClientWithApiKeyForUser(updatedUser, adminUser);
 
-            // Update user with client info using User model directly
+            // 3. User model update with created Client ID
             const finalUser = await User.findByIdAndUpdate(userId, {
                 clientId: client._id
             }, { new: true });

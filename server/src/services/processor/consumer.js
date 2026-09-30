@@ -9,6 +9,21 @@ import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
 import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
 import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
 
+import { z } from 'zod';
+import rabbitmq from '../../shared/config/rabbitmq.js';
+import mongodb from '../../shared/config/mongodb.js';
+import postgres from '../../shared/config/postgres.js';
+import config from '../../shared/config/index.js';
+import logger from '../../shared/config/logger.js';
+import processorContainer from './Dependencies/dependencies.js';
+import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
+import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
+import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
+
+/**
+ * 📦 Zod Schema Validation for Incoming Queue Messages
+ * Kaam: Queue se aane wale API hit messages ka format validate karta hai.
+ */
 const messageSchema = z.object({
     type: z.enum([EVENT_TYPES.API_HIT]),
     data: z.record(z.string(), z.unknown()),
@@ -16,6 +31,11 @@ const messageSchema = z.object({
     timestamp: z.union([z.string(), z.number()]).optional(),
 });
 
+/**
+ * ⚙️ EventConsumer Worker Class
+ * Kaam: Background worker process jo RabbitMQ Queue se continuously API hits (events) read karta hai aur MongoDB/Postgres me bulk insert & process karta hai.
+ * Usage: Background process `npm run processor` dwara execute hota hai. Server main process ko load-free rakhta hai.
+ */
 class EventConsumer {
     constructor({ processorService, rabbitmq, mongodb, postgres, config, logger, retryStrategy, circuitBreaker }) {
         this._processorService = processorService;
@@ -31,16 +51,19 @@ class EventConsumer {
         this.channel = null;
         this._stats = { processed: 0, failed: 0, retried: 0, dlqRouted: 0, lastProcessedAt: null };
         this._processedIds = new Set();
-        this._poisonMessages = new Map(); // messageType -> consecutive failure count
-    };
+        this._poisonMessages = new Map(); // Message failure counter for Dead-Letter Queue routing
+    }
 
-
+    /**
+     * 🚀 Consumer Start Worker Loop
+     * Kaam: Database connect karta hai, RabbitMQ queue subscribe karta hai aur messages process karna start karta hai.
+     */
     async start() {
         try {
             await this._connectDatabases();
             this.channel = await this._rabbitmq.connect();
             const prefetch = this._config.consumer?.prefetch || 10;
-            this.channel.prefetch(prefetch);
+            this.channel.prefetch(prefetch); // Concurrent message prefetch limit
 
             this.channel.on('error', (err) => {
                 this._logger.error('Consumer channel error:', err);
@@ -55,6 +78,7 @@ class EventConsumer {
             this._logger.info(`Started consuming from queue: ${this._config.rabbitmq.queue}`);
             this.isRunning = true;
 
+            // RabbitMQ queue subscriber handler
             await this.channel.consume(
                 this._config.rabbitmq.queue,
                 async (msg) => {
