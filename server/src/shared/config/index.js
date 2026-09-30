@@ -37,7 +37,7 @@ const config = {
     // 🐰 RabbitMQ Message Queue Settings (Asynchronous API hit ingestion & processing)
     // Usage: Publisher (rabbitmq.js) aur Consumer Worker (consumer.js) dwara hit events queue karne ke liye use hota hai.
     rabbitmq: {
-        url: process.env.RABBITMQ_URL || 'amqp://localhost:5672',
+        url: process.env.RABBITMQ_URL || 'amqp://api_user:dhruv@123@localhost:5672/api_monitoring',
         queue: process.env.RABBITMQ_QUEUE || 'api_hits',
         publisherConfirms: process.env.RABBITMQ_PUBLISHER_CONFIRMS === 'true' || false,
         retryAttempts: parseInt(process.env.RABBITMQ_RETRY_ATTEMPTS || '3', 10),

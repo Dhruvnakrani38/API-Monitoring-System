@@ -9,17 +9,6 @@ import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
 import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
 import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
 
-import { z } from 'zod';
-import rabbitmq from '../../shared/config/rabbitmq.js';
-import mongodb from '../../shared/config/mongodb.js';
-import postgres from '../../shared/config/postgres.js';
-import config from '../../shared/config/index.js';
-import logger from '../../shared/config/logger.js';
-import processorContainer from './Dependencies/dependencies.js';
-import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
-import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
-import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
-
 /**
  * 📦 Zod Schema Validation for Incoming Queue Messages
  * Kaam: Queue se aane wale API hit messages ka format validate karta hai.

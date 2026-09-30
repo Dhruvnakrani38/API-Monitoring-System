@@ -12,9 +12,26 @@ app.use(express.json());
 
 // Apply monitoring middleware early in the stack
 app.use(monitoringMiddleware({
-    serviceName: 'blog-api',
-    enableLogging: true
+    serviceName: process.env.PULSEWATCH_SERVICE_NAME || 'demo-api',
+    enableLogging: process.env.MONITORING_LOGGING === 'true'
 }));
+
+const demoEndpoints = Array.from({ length: 10 }, (_, index) => `/api/demo/endpoint-${index + 1}`);
+
+demoEndpoints.forEach((endpoint, index) => {
+    app.get(endpoint, (req, res) => {
+        const endpointNumber = index + 1;
+        const statusCode = endpointNumber === 10 && Math.random() < 0.05 ? 503 : 200;
+        res.status(statusCode).json({
+            success: statusCode === 200,
+            service: 'demo-api',
+            endpoint,
+            endpointNumber,
+            requestId: req.get('x-request-id') || null,
+            timestamp: new Date().toISOString(),
+        });
+    });
+});
 
 // Mock data
 const posts = [
@@ -180,11 +197,12 @@ app.get('/', (req, res) => {
         service: 'Demo Blog API',
         version: '1.0.0',
         endpoints: {
+            demo: demoEndpoints,
             posts: '/api/posts',
             comments: '/api/posts/:postId/comments',
             health: '/health'
         },
-        monitoring: process.env.MONITORING_API_KEY ? 'enabled' : 'disabled'
+        monitoring: process.env.PULSEWATCH_API_KEY || process.env.MONITORING_API_KEY ? 'enabled' : 'disabled'
     });
 });
 
@@ -193,7 +211,7 @@ app.use((req, res) => {
     res.status(404).json({
         success: false,
         message: 'Endpoint not found',
-        availableEndpoints: ['/api/posts', '/api/posts/:postId/comments', '/health']
+        availableEndpoints: [...demoEndpoints, '/api/posts', '/api/posts/:postId/comments', '/health']
     });
 });
 
@@ -208,7 +226,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`📝 Blog API running on port ${PORT}`);
-    console.log(`📊 Monitoring: ${process.env.MONITORING_API_KEY ? 'ENABLED' : 'DISABLED'}`);
-    console.log(`🔗 Endpoints: http://localhost:${PORT}/api/posts, http://localhost:${PORT}/api/posts/:postId/comments`);
+    console.log(`Demo API running on port ${PORT}`);
+    console.log(`PulseWatch monitoring: ${process.env.PULSEWATCH_API_KEY || process.env.MONITORING_API_KEY ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`Demo endpoints: ${demoEndpoints.map((endpoint) => `http://localhost:${PORT}${endpoint}`).join(', ')}`);
 });

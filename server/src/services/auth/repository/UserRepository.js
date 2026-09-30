@@ -125,6 +125,15 @@ class MongoUserRepository extends BaseRepository {
         }
     }
 
+    async findByClientId(clientId) {
+        try {
+            return await this.model.find({ clientId, isActive: true }).select("-password");
+        } catch (error) {
+            logger.error("Error finding users by client", error);
+            throw error;
+        }
+    }
+
     /**
      * update: User ko ID se update karta hai (password bhi return ho sakta hai).
      * Warning: Yeh password bhi return karta hai - sensitive data ke liye updateSafe use karo.

@@ -13,6 +13,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const OverviewPage = lazy(() => import('./pages/OverviewPage').then(m => ({ default: m.OverviewPage })));
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
 const PendingApprovalsPage = lazy(() => import('./pages/PendingApprovalsPage').then(m => ({ default: m.PendingApprovalsPage })));
+const TeamPage = lazy(() => import('./pages/TeamPage').then(m => ({ default: m.TeamPage })));
 
 const pageFallback = (
     <div style={{ height: '60vh', display: 'grid', placeItems: 'center' }}>Loading…</div>
@@ -20,13 +21,17 @@ const pageFallback = (
 
 function AuthGate() {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [currentUser, setCurrentUser] = useState(null);
     const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'signup'
     const queryClient = useQueryClient();
 
     useEffect(() => {
         const controller = new AbortController();
         authApi.getProfile({ signal: controller.signal })
-            .then(() => setIsAuthenticated(true))
+            .then((response) => {
+                setCurrentUser(response.data);
+                setIsAuthenticated(true);
+            })
             .catch((err) => {
                 if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
                     setIsAuthenticated(false);
@@ -35,11 +40,20 @@ function AuthGate() {
         return () => controller.abort();
     }, []);
 
-    const handleLoginSuccess = () => setIsAuthenticated(true);
+    const handleLoginSuccess = async () => {
+        try {
+            const response = await authApi.getProfile();
+            setCurrentUser(response.data);
+            setIsAuthenticated(true);
+        } catch {
+            setIsAuthenticated(false);
+        }
+    };
 
     const handleLogout = useCallback(async () => {
         try { await authApi.logout(); } catch { }
         queryClient.clear();
+        setCurrentUser(null);
         setAuthView('landing');
         setIsAuthenticated(false);
     }, [queryClient]);
@@ -92,12 +106,13 @@ function AuthGate() {
     }
 
     return (
-        <DashboardLayout onLogout={handleLogout}>
+        <DashboardLayout onLogout={handleLogout} currentUser={currentUser}>
             <Suspense fallback={pageFallback}>
                 <Routes>
                     <Route path="/" element={<OverviewPage />} />
-                    <Route path="/approvals" element={<PendingApprovalsPage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/approvals" element={currentUser?.role === 'super_admin' ? <PendingApprovalsPage /> : <Navigate to="/" replace />} />
+                    <Route path="/team" element={currentUser?.role === 'client_admin' ? <TeamPage currentUser={currentUser} /> : <Navigate to="/" replace />} />
+                    <Route path="/settings" element={<SettingsPage currentUser={currentUser} />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>

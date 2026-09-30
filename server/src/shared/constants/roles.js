@@ -18,6 +18,11 @@ export const APPLICATION_ROLES = {
     CLIENT_ADMIN: "client_admin"
 }
 
+export const normalizeClientRole = (role) => {
+    const normalized = String(role || APPLICATION_ROLES.CLIENT_VIEWER).trim().toLowerCase();
+    return isValidClientRole(normalized) ? normalized : APPLICATION_ROLES.CLIENT_VIEWER;
+};
+
 // Check karta hai ki role client-level role list mein maujood hai.
 export const isValidClientRole = (role) => CLIENT_ROLES.includes(role);
 // Check karta hai ki role kisi bhi supported application role mein hai.

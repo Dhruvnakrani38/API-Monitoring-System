@@ -31,7 +31,7 @@ export class ProcessorService {
         let rawEventSaved = false;
 
         try {
-            logger.info('Processing event data:', {
+            logger.debug('Processing event data:', {
                 eventId: eventData.eventId,
                 clientId: eventData.clientId,
                 serviceName: eventData.serviceName,
@@ -44,7 +44,7 @@ export class ProcessorService {
             await this.apiHitRepository.save(eventData)
             rawEventSaved = true;
 
-            logger.info('Raw event saved to MongoD:', {
+            logger.debug('Raw event saved to MongoD:', {
                 eventId: eventData.eventId
             });
 
@@ -53,7 +53,7 @@ export class ProcessorService {
 
             await this._updateMetricsWithFallback(eventData);
 
-            logger.info('Event processed successfully:', {
+            logger.debug('Event processed successfully:', {
                 eventId: eventData.eventId
             });
         } catch (error) {
@@ -93,7 +93,7 @@ export class ProcessorService {
 
             await this.metricsRepository.upsertEndpointMetrics(metricsData);
 
-            logger.info('Metrics updated successfully', {
+            logger.debug('Metrics updated successfully', {
                 eventId: eventData.eventId,
             });
         } catch (error) {

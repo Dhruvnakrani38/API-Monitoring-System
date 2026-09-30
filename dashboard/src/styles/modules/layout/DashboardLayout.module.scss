@@ -148,6 +148,37 @@
     gap: 0.5rem;
 }
 
+.accountIdentity {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0 0.75rem;
+    text-transform: capitalize;
+
+    strong {
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    span {
+        color: var(--shell-muted);
+        font-size: 0.68rem;
+    }
+
+    @media (max-width: 480px) {
+        margin: 0 0.25rem;
+
+        strong {
+            display: none;
+        }
+
+        span {
+            white-space: nowrap;
+            font-size: 0.62rem;
+        }
+    }
+}
+
 .refreshButton {
     display: inline-flex;
     align-items: center;

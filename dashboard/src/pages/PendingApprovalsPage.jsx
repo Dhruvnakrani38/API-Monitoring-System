@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { authApi } from '../api/api';
+import { authApi, clientApi } from '../api/api';
 import { CheckCircle2, XCircle, Clock, ShieldCheck, Key, Copy, Check } from 'lucide-react';
 
 // Ye page pending registrations ko load karke approve ya reject karne deta hai.
@@ -8,16 +8,22 @@ export function PendingApprovalsPage() {
     const queryClient = useQueryClient();
     const [approvalResult, setApprovalResult] = useState(null);
     const [copiedKey, setCopiedKey] = useState(false);
+    const [selectedRoles, setSelectedRoles] = useState({});
+    const [selectedClients, setSelectedClients] = useState({});
 
     // Server se pending registrations mangao aur loading/error state sambhalo.
     const { data: pendingUsersResponse, isLoading, error } = useQuery({
         queryKey: ['pendingUsers'],
         queryFn: authApi.getPendingUsers,
     });
+    const { data: clientsResponse } = useQuery({
+        queryKey: ['clients'],
+        queryFn: clientApi.getClients,
+    });
 
     // Approval ke baad list refresh karo aur naya client/API key dikhaye.
     const approveMutation = useMutation({
-        mutationFn: authApi.approveUser,
+        mutationFn: ({ userId, role, clientId }) => authApi.approveUser(userId, role, clientId),
         onSuccess: (response) => {
             queryClient.invalidateQueries({ queryKey: ['pendingUsers'] });
             if (response.data) {
@@ -35,6 +41,7 @@ export function PendingApprovalsPage() {
     });
 
     const pendingUsers = pendingUsersResponse?.data || [];
+    const clients = clientsResponse?.data || [];
 
     // Generated API key clipboard mein copy karke temporary feedback dikhata hai.
     const handleCopyKey = (key) => {
@@ -69,9 +76,16 @@ export function PendingApprovalsPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                         <CheckCircle2 style={{ width: 24, height: 24 }} />
                         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
-                            Client Approved Successfully!
+                                User Approved Successfully
                         </h3>
                     </div>
+                    <p style={{ margin: '0 0 0.35rem 0', color: 'var(--text-primary, #f8fafc)' }}>
+                        <strong>Client:</strong> {approvalResult.client?.name}
+                    </p>
+                    <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary, #94a3b8)', overflowWrap: 'anywhere' }}>
+                        {approvalResult.client?.email} · {approvalResult.client?.slug}
+                        {!approvalResult.apiKey && ' · Existing client; no new API key was created'}
+                    </p>
                     <p style={{ margin: '0 0 1rem 0', color: 'var(--text-primary, #f8fafc)' }}>
                         <strong>User:</strong> {approvalResult.user?.username} ({approvalResult.user?.email})
                     </p>
@@ -164,7 +178,50 @@ export function PendingApprovalsPage() {
                                     {user.email} &bull; Requested: {new Date(user.createdAt).toLocaleDateString()}
                                 </p>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.85rem' }}>
+                                    Assign client
+                                    <select
+                                        value={selectedClients[user._id || user.id] || ''}
+                                        onChange={(event) => setSelectedClients((prev) => ({
+                                            ...prev,
+                                            [user._id || user.id]: event.target.value,
+                                        }))}
+                                        style={{
+                                            maxWidth: '220px',
+                                            background: 'rgba(15, 23, 42, 0.85)',
+                                            color: 'var(--text-primary, #f8fafc)',
+                                            border: '1px solid var(--border-color, rgba(255,255,255,0.1))',
+                                            borderRadius: '0.5rem',
+                                            padding: '0.45rem 0.75rem',
+                                        }}
+                                    >
+                                        <option value="">Create new client</option>
+                                        {clients.map((client) => (
+                                            <option key={client._id} value={client._id}>{client.name}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-secondary, #94a3b8)', fontSize: '0.85rem' }}>
+                                    Role
+                                    <select
+                                        value={selectedRoles[user._id || user.id] || 'client_viewer'}
+                                        onChange={(event) => setSelectedRoles((prev) => ({
+                                            ...prev,
+                                            [user._id || user.id]: event.target.value,
+                                        }))}
+                                        style={{
+                                            background: 'rgba(15, 23, 42, 0.85)',
+                                            color: 'var(--text-primary, #f8fafc)',
+                                            border: '1px solid var(--border-color, rgba(255,255,255,0.1))',
+                                            borderRadius: '0.5rem',
+                                            padding: '0.45rem 0.75rem',
+                                        }}
+                                    >
+                                        <option value="client_viewer">Client Viewer</option>
+                                        <option value="client_admin">Client Admin</option>
+                                    </select>
+                                </label>
                                 <button
                                     onClick={() => rejectMutation.mutate(user._id || user.id)}
                                     disabled={rejectMutation.isPending}
@@ -185,7 +242,11 @@ export function PendingApprovalsPage() {
                                     Reject
                                 </button>
                                 <button
-                                    onClick={() => approveMutation.mutate(user._id || user.id)}
+                                    onClick={() => approveMutation.mutate({
+                                        userId: user._id || user.id,
+                                        role: selectedRoles[user._id || user.id] || 'client_viewer',
+                                        clientId: selectedClients[user._id || user.id] || null,
+                                    })}
                                     disabled={approveMutation.isPending}
                                     style={{
                                         background: 'linear-gradient(135deg, #22c55e, #16a34a)',

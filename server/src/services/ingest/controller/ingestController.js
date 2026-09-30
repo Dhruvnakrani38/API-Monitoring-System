@@ -24,7 +24,7 @@ export class IngestController {
      */
     async ingestHit(req, res, next) {
         try {
-            logger.info('Ingest: Client data received', {
+            logger.debug('Ingest: Client data received', {
                 clientId: req.client._id,
                 clientName: req.client.name,
                 clientKeys: Object.keys(req.client)
@@ -38,7 +38,7 @@ export class IngestController {
                 userAgent: req.headers['user-agent'] || ''
             };
 
-            logger.info('Ingest: Hit data prepared', {
+            logger.debug('Ingest: Hit data prepared', {
                 clientId: req.client._id,
                 endpoint: hitData.endpoint,
                 method: hitData.method

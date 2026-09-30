@@ -72,6 +72,24 @@ export class ClientController {
         }
     }
 
+    async getClients(req, res, next) {
+        try {
+            const clients = await this.clientService.getClients(req.user);
+            return res.status(200).json(ResponseFormatter.success(clients, "Clients fetched successfully", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getClientUsers(req, res, next) {
+        try {
+            const users = await this.clientService.getClientUsers(req.params.clientId, req.user);
+            return res.status(200).json(ResponseFormatter.success(users, "Client users fetched successfully", 200));
+        } catch (error) {
+            next(error);
+        }
+    }
+
 
     /**
      * createApiKey: Kisi client ke liye naya API key banana.
@@ -102,6 +120,19 @@ export class ClientController {
             return res.status(200).json(ResponseFormatter.success(apiKey, "API key fetched successfully", 200))
         } catch (error) {
             next(error)
+        }
+    }
+
+    async revealClientApiKeys(req, res, next) {
+        try {
+            const keys = await this.clientService.revealClientApiKeys(
+                req.params.clientId,
+                req.user,
+                req.body.password,
+            );
+            return res.status(200).json(ResponseFormatter.success(keys, "API keys revealed after password verification", 200));
+        } catch (error) {
+            next(error);
         }
     }
 }

@@ -1,6 +1,8 @@
 import express from "express";
 import clientDependencies from "../Dependencies/dependencies.js"
 import authenticate from "../../../shared/middlewares/authenticate.js"
+import authorize from "../../../shared/middlewares/authorize.js"
+import { APPLICATION_ROLES } from "../../../shared/constants/roles.js"
 
 // Create a new router instance
 const router = express.Router();
@@ -14,13 +16,19 @@ router.use(authenticate);
 // Onboard a new client
 router.post("/admin/clients/onboard", (req, res, next) => clientController.createClient(req, res, next))
 
+router.get("/admin/clients", (req, res, next) => clientController.getClients(req, res, next))
+
+router.get("/admin/clients/:clientId/users", authorize([APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN]), (req, res, next) => clientController.getClientUsers(req, res, next))
+
 // Create a user for a client
-router.post("/admin/clients/:clientId/users", (req, res, next) => clientController.createClientUser(req, res, next))
+router.post("/admin/clients/:clientId/users", authorize([APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN]), (req, res, next) => clientController.createClientUser(req, res, next))
 
 // Create API key for a client
 router.post("/admin/clients/:clientId/api/keys", (req, res, next) => clientController.createApiKey(req, res, next))
 
 // Get all API keys for a client
 router.get("/admin/clients/:clientId/api/keys", (req, res, next) => clientController.getClientApiKeys(req, res, next))
+
+router.post("/admin/clients/:clientId/api/keys/reveal", authorize([APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN]), (req, res, next) => clientController.revealClientApiKeys(req, res, next))
 
 export default router;

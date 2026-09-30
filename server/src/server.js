@@ -135,11 +135,16 @@ async function initializeConnection() {
         await postgres.testConnection();
 
         // 3. Connect to RabbitMQ Queue Broker & Assert Queues
-        await rabbitmq.connect();
+        try {
+            await rabbitmq.connect();
+            logger.info("RabbitMQ connected successfully");
+        } catch (error) {
+            logger.warn("RabbitMQ unavailable; continuing without queue processing for local development.", error.message || error);
+        }
 
-        logger.info("All connections established successfully");
+        logger.info("All required connections initialized successfully");
     } catch (error) {
-        logger.error("Failed to initialize connections:", error);
+        logger.error("Failed to initialize primary connections:", error);
         throw error;
     }
 }

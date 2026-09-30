@@ -7,10 +7,11 @@
 // =====================================================================
 
 import logger from "../../../shared/config/logger.js";
-import { APPLICATION_ROLES, isValidClientRole } from "../../../shared/constants/roles.js";
+import { APPLICATION_ROLES, isValidClientRole, normalizeClientRole } from "../../../shared/constants/roles.js";
 import AppError from "../../../shared/utils/AppError.js";
 import { v4 as uudiv4 } from "uuid";
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import User from "../../../shared/models/User.js";
 
 /**
@@ -106,6 +107,53 @@ export class ClientService {
         }
     };
 
+    async findClientById(clientId) {
+        return this.clientRepository.findById(clientId);
+    }
+
+    async getClients(user) {
+        if (user.role !== APPLICATION_ROLES.SUPER_ADMIN) {
+            throw new AppError("Access denied", 403);
+        }
+
+        return this.clientRepository.find({ isActive: true }, { limit: 200 });
+    }
+
+    async getClientUsers(clientId, user) {
+        if (![APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN].includes(user.role)
+            || !this.canUserAccessClient(user, clientId)) {
+            throw new AppError("Access denied", 403);
+        }
+
+        if (!await this.clientRepository.findById(clientId)) {
+            throw new AppError("Client not found", 404);
+        }
+
+        return this.userRepository.findByClientId(clientId);
+    }
+
+    async getClientProfile(clientId) {
+        const client = await this.clientRepository.findById(clientId);
+        if (!client) return null;
+
+        const owner = client.createdBy ? await this.userRepository.findById(client.createdBy) : null;
+        return {
+            _id: client._id,
+            name: client.name,
+            slug: client.slug,
+            email: client.email,
+            description: client.description,
+            website: client.website,
+            isActive: client.isActive,
+            createdAt: client.createdAt,
+            createdBy: owner ? {
+                username: owner.username,
+                email: owner.email,
+                role: owner.role,
+            } : null,
+        };
+    }
+
     /**
      * createClientWithApiKeyForUser: Admin approval ke waqt use hota hai.
      * Yeh ek atomic-ish operation hai:
@@ -114,26 +162,37 @@ export class ClientService {
      *   3. API key generate karo
      * Reusability: authService.approveUser yahi call karta hai.
      */
-    async createClientWithApiKeyForUser(userData, adminUser) {
+    async createClientWithApiKeyForUser(userData, adminUser, assignedRole = userData.role || APPLICATION_ROLES.CLIENT_VIEWER) {
         try {
+            const normalizedRole = normalizeClientRole(assignedRole);
+
             // Step 1: User ke username se client data banao
             const clientData = {
                 name: userData.username + "'s Client",
                 email: userData.email,
-                description: "Auto-generated client for approved user",
+                description: `Auto-generated client for approved ${normalizedRole} user`,
                 website: ""
             };
 
             const client = await this.createClient(clientData, adminUser);
 
-            // Step 2: User record me naya clientId update karo
-            // (approve hone ke baad user ka clientId set ho jaata hai)
-            await User.findByIdAndUpdate(userData._id, { clientId: client._id });
+            // Step 2: User record me naya clientId + role + permissions update karo
+            const permissions = this.buildPermissionsForRole(normalizedRole);
+            await User.findByIdAndUpdate(userData._id, {
+                clientId: client._id,
+                role: normalizedRole,
+                permissions,
+                isActive: true,
+                isApproved: true,
+                approvalStatus: 'approved',
+                approvedBy: adminUser.userId,
+                approvedAt: new Date()
+            });
 
             // Step 3: Default API key generate karo
             const keyData = {
                 name: "Default API Key",
-                description: "Auto-generated API key for approved user",
+                description: `Auto-generated API key for approved ${normalizedRole} user`,
                 environment: "production"
             };
 
@@ -141,6 +200,7 @@ export class ClientService {
 
             logger.info("Client and API key created for approved user", {
                 userId: userData._id,
+                role: normalizedRole,
                 clientId: client._id,
                 apiKey: apiKey.keyId
             });
@@ -153,6 +213,26 @@ export class ClientService {
             logger.error('Error creating client with API key for user:', error);
             throw error;
         }
+    }
+
+    buildPermissionsForRole(role) {
+        const normalizedRole = normalizeClientRole(role);
+
+        if (normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN) {
+            return {
+                canCreateApiKeys: true,
+                canManageUsers: true,
+                canViewAnalytics: true,
+                canExportData: true,
+            };
+        }
+
+        return {
+            canCreateApiKeys: false,
+            canManageUsers: false,
+            canViewAnalytics: true,
+            canExportData: false,
+        };
     }
 
     /**
@@ -178,15 +258,20 @@ export class ClientService {
      */
     async createClientUser(clientId, userData, adminUser) {
         try {
+            if (![APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN].includes(adminUser.role)) {
+                throw new AppError("Only client admins can add users", 403);
+            }
+
             // Pehle check karo: requester ke paas access hai?
             if (!this.canUserAccessClient(adminUser, clientId)) {
                 throw new AppError("Access denied", 403)
             };
 
             const { username, email, password, role = APPLICATION_ROLES.CLIENT_VIEWER } = userData;
+            const normalizedRole = normalizeClientRole(role);
 
             // Valid role check (client_admin ya client_viewer)
-            if (!isValidClientRole(role)) {
+            if (!isValidClientRole(normalizedRole)) {
                 throw new AppError("Invalid role for client user", 400)
             };
 
@@ -197,32 +282,19 @@ export class ClientService {
                 throw new AppError("Client not found", 404)
             };
 
-            // Default permissions: sirf analytics view
-            let permissions = {
-                canCreateApiKeys: false,
-                canManageUsers: false,
-                canViewAnalytics: true,
-                canExportData: false,
-            };
-
-            // CLIENT_ADMIN ko zyada permissions milti hain
-            if (role === APPLICATION_ROLES.CLIENT_ADMIN) {
-                permissions = {
-                    canCreateApiKeys: true,
-                    canManageUsers: true,
-                    canViewAnalytics: true,
-                    canExportData: true,
-                }
-            };
+            const permissions = this.buildPermissionsForRole(normalizedRole);
 
             // User create karo userRepository ke through
             const user = await this.userRepository.create({
                 username,
                 email,
                 password,
-                role,
+                role: normalizedRole,
                 clientId,
-                permissions
+                permissions,
+                isActive: true,
+                isApproved: true,
+                approvalStatus: 'approved'
             });
 
             logger.info("Client user created", {
@@ -310,6 +382,10 @@ export class ClientService {
      */
     async getClientApiKeys(clientId, user) {
         try {
+            if (![APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN].includes(user.role)) {
+                throw new AppError('Only client admins can access API keys', 403);
+            }
+
             if (!this.canUserAccessClient(user, clientId)) {
                 throw new AppError('Access denied to this client', 403);
             };
@@ -330,6 +406,36 @@ export class ClientService {
             throw error;
         }
     };
+
+    async revealClientApiKeys(clientId, user, password) {
+        if (![APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN].includes(user.role)
+            || !this.canUserAccessClient(user, clientId)) {
+            throw new AppError('Access denied to this client', 403);
+        }
+
+        if (!password) {
+            throw new AppError('Password confirmation is required', 400);
+        }
+
+        const account = await this.userRepository.findById(user.userId);
+        if (!account || !await bcrypt.compare(password, account.password)) {
+            throw new AppError('Password confirmation failed', 401);
+        }
+
+        const keys = await this.apiKeyRepository.findByClientId(clientId, { isActive: true });
+        return keys.map((key) => {
+            const keyData = key.toObject ? key.toObject() : key;
+            return {
+                keyId: keyData.keyId,
+                keyValue: keyData.keyValue,
+                name: keyData.name,
+                description: keyData.description,
+                environment: keyData.environment,
+                createdAt: keyData.createdAt,
+                expiresAt: keyData.expiresAt,
+            };
+        });
+    }
 
     /**
      * getClientByApiKey: API key value se client dhundhna.

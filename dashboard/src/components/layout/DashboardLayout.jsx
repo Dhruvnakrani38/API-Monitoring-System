@@ -8,7 +8,7 @@ import { QUERY_KEYS } from '../../constants';
 import styles from '../../styles/modules/layout/DashboardLayout.module.scss';
 
 // Ye layout sidebar, page header aur shared account actions ko wrap karta hai.
-export function DashboardLayout({ children, onLogout }) {
+export function DashboardLayout({ children, onLogout, currentUser }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { currentTheme } = useTheme();
     const queryClient = useQueryClient();
@@ -28,7 +28,7 @@ export function DashboardLayout({ children, onLogout }) {
 
     return (
         <div className={`${styles.container} ${themeClass}`}>
-            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentUser={currentUser} />
             <div className={styles.mainContent}>
                 <header className={styles.header}>
                     <div className={styles.headerContent}>
@@ -44,6 +44,10 @@ export function DashboardLayout({ children, onLogout }) {
                                 <Clock aria-hidden="true" />
                                 Last updated: {lastUpdated}
                             </p>
+                        </div>
+                        <div className={styles.accountIdentity} aria-label={`Signed in as ${currentUser?.username}, ${currentUser?.role}`}>
+                            <strong>{currentUser?.username}</strong>
+                            <span>{currentUser?.role?.replaceAll('_', ' ')}</span>
                         </div>
                         <div className={styles.actionButtons}>
                             <button

@@ -57,7 +57,7 @@ export class IngestService {
                 };
             }
 
-            logger.info('API hit ingested', {
+            logger.debug('API hit ingested', {
                 eventId: event.eventId,
                 endpoint: event.endpoint,
                 method: event.method,
@@ -90,7 +90,9 @@ export class IngestService {
             'clientId',
         ];
 
-        const missingFields = requiredFields.filter((field) => !hitData[field])
+        const missingFields = requiredFields.filter((field) => (
+            hitData[field] === undefined || hitData[field] === null || hitData[field] === ''
+        ));
 
         if (missingFields.length > 0) {
             throw new AppError(`Missing required fields: ${missingFields.join(",")}`, 400)

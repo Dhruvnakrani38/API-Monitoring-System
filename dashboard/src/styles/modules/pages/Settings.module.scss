@@ -1,0 +1,182 @@
+.profileGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.detailsList {
+    display: grid;
+    gap: 0;
+    margin: 0;
+
+    > div {
+        display: grid;
+        grid-template-columns: minmax(105px, 0.75fr) minmax(0, 1.25fr);
+        gap: 0.75rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid hsl(var(--border) / 0.5);
+
+        &:last-child {
+            border-bottom: 0;
+        }
+    }
+
+    dt {
+        color: hsl(var(--muted-foreground));
+        font-size: 0.78rem;
+    }
+
+    dd {
+        min-width: 0;
+        margin: 0;
+        color: hsl(var(--foreground));
+        font-size: 0.84rem;
+        overflow-wrap: anywhere;
+    }
+}
+
+.emptyNote {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+    font-size: 0.875rem;
+}
+
+.clientSelect,
+.passwordField {
+    display: grid;
+    gap: 0.4rem;
+    color: hsl(var(--foreground));
+    font-size: 0.84rem;
+
+    select,
+    input {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 40px;
+        padding: 0.55rem 0.7rem;
+        border: 1px solid hsl(var(--border));
+        border-radius: 4px;
+        color: hsl(var(--foreground));
+        background: hsl(var(--background));
+        font: inherit;
+    }
+}
+
+.clientSelect {
+    max-width: 420px;
+    margin-bottom: 1rem;
+}
+
+.revealForm {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.75rem;
+    max-width: 640px;
+
+    > button {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.55rem 0.8rem;
+        border: 0;
+        border-radius: 4px;
+        color: hsl(var(--primary-foreground));
+        background: hsl(var(--primary));
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+    }
+}
+
+.errorText {
+    color: #dc4545;
+    font-size: 0.85rem;
+}
+
+.keyList {
+    margin-top: 1.25rem;
+    border-top: 1px solid hsl(var(--border) / 0.6);
+}
+
+.keyListHeader,
+.keyRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.keyListHeader {
+    padding: 0.75rem 0;
+    font-size: 0.85rem;
+}
+
+.keyRow {
+    padding: 0.75rem 0;
+    border-top: 1px solid hsl(var(--border) / 0.4);
+
+    > div {
+        display: grid;
+        min-width: 0;
+        gap: 0.35rem;
+        font-size: 0.82rem;
+    }
+
+    code {
+        color: hsl(var(--foreground));
+        overflow-wrap: anywhere;
+        font-size: 0.78rem;
+    }
+}
+
+.hideButton,
+.copyButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 34px;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    color: hsl(var(--foreground));
+    background: transparent;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.copyButton {
+    width: 36px;
+    flex: 0 0 36px;
+}
+
+@media (max-width: 720px) {
+    .profileGrid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .detailsList > div {
+        grid-template-columns: minmax(88px, 0.65fr) minmax(0, 1.35fr);
+        gap: 0.5rem;
+    }
+
+    .revealForm {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .revealForm > button {
+        width: 100%;
+    }
+}

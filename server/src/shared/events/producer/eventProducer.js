@@ -1,6 +1,45 @@
 import { EVENT_TYPES } from "../eventContracts.js";
 import { isRetryable } from "./RetryStrategy.js"
 
+const channelDrainWaiters = new WeakMap();
+
+function waitForChannelDrain(channel) {
+    const existingWaiter = channelDrainWaiters.get(channel);
+    if (existingWaiter) return existingWaiter;
+
+    let waiter;
+    waiter = new Promise((resolve, reject) => {
+        const cleanup = () => {
+            channel.removeListener('drain', onDrain);
+            channel.removeListener('error', onError);
+            channel.removeListener('close', onClose);
+        };
+        const onDrain = () => {
+            cleanup();
+            resolve();
+        };
+        const onError = (error) => {
+            cleanup();
+            reject(error);
+        };
+        const onClose = () => {
+            cleanup();
+            reject(new Error('RabbitMQ confirm channel closed before draining'));
+        };
+
+        channel.once('drain', onDrain);
+        channel.once('error', onError);
+        channel.once('close', onClose);
+    });
+
+    channelDrainWaiters.set(channel, waiter);
+    waiter.then(
+        () => channelDrainWaiters.delete(channel),
+        () => channelDrainWaiters.delete(channel),
+    );
+    return waiter;
+}
+
 /**
  * EventProducer is responsible for publishing events to a RabbitMQ queue with reliability features such as retry logic and circuit breaking. It manages a confirm channel to ensure messages are acknowledged by the broker, and it implements a retry strategy with exponential backoff and jitter to handle transient failures. The producer also tracks metrics for published messages, failed attempts, and exhausted retries, and it provides a shutdown method to gracefully close the channel when the application is terminating.
  * @class EventProducer
@@ -80,7 +119,7 @@ export class EventProducer {
                 this._circuitBreaker.onSuccess();
                 this._incrementMetric('published');
 
-                this._logger.info('[EventProducer] published', {
+                this._logger.debug('[EventProducer] published', {
                     eventId: eventData.eventId,
                     correlationId,
                     attempt: attempt + 1,
@@ -125,6 +164,8 @@ export class EventProducer {
      */
     async _publish(eventData, { correlationId, attempt }) {
         const channel = await this._channelManager.getChannel();
+        const pendingDrain = channelDrainWaiters.get(channel);
+        if (pendingDrain) await pendingDrain;
 
         const message = {
             type: EVENT_TYPES.API_HIT,
@@ -143,8 +184,9 @@ export class EventProducer {
             timestamp: Math.floor(Date.now() / 1000)
         };
 
-        return new Promise((resolve, reject) => {
-            const written = channel.publish(
+        let written;
+        const confirmation = new Promise((resolve, reject) => {
+            written = channel.publish(
                 '',
                 this._queueName,
                 buffer,
@@ -156,20 +198,18 @@ export class EventProducer {
             );
 
             if (!written) {
-                this._logger.info('[EventProducer] back-pressure detected, waiting for drain', {
+                this._logger.debug('[EventProducer] back-pressure detected, waiting for drain', {
                     eventId: eventData.eventId,
                 });
             }
+        });
 
-            const onDrain = () => {
-                channel.removeListener('drain', onDrain);
-                this._logger.debug('[EventProducer] drain event received', {
-                    eventId: eventData.eventId,
-                });
-            }
+        if (!written) {
+            const drainWaiter = waitForChannelDrain(channel);
+            drainWaiter.catch(() => {});
+        }
 
-            channel.once("drain", onDrain)
-        })
+        await confirmation;
     }
 
     /**

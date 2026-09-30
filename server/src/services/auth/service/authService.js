@@ -220,8 +220,10 @@ export class AuthService {
      * Kaam: Pending user ko Approve karta hai, automatically Client Workspace aur API Key (`apim_...`) generate karta hai.
      * Usage: Admin Dashboard (`/api/auth/admin/users/:userId/approve`) dwara invoke hota hai.
      */
-    async approveUser(userId, adminUser, clientService) {
+    async approveUser(userId, adminUser, clientService, requestedRole = APPLICATION_ROLES.CLIENT_VIEWER, assignedClientId = null) {
         try {
+            const normalizedRole = requestedRole === APPLICATION_ROLES.CLIENT_ADMIN ? APPLICATION_ROLES.CLIENT_ADMIN : APPLICATION_ROLES.CLIENT_VIEWER;
+
             const user = await this.userRepository.findById(userId);
             if (!user) {
                 throw new AppError("User not found", 404);
@@ -231,25 +233,64 @@ export class AuthService {
                 throw new AppError("User already approved", 400);
             }
 
+            if (assignedClientId) {
+                const client = await clientService.findClientById(assignedClientId);
+                if (!client) {
+                    throw new AppError("Client not found", 404);
+                }
+
+                const finalUser = await this.userRepository.updateSafe(userId, {
+                    isApproved: true,
+                    approvalStatus: 'approved',
+                    isActive: true,
+                    role: normalizedRole,
+                    clientId: client._id,
+                    permissions: clientService.buildPermissionsForRole(normalizedRole),
+                    approvedBy: adminUser.userId,
+                    approvedAt: new Date()
+                });
+
+                return {
+                    user: this.formatUserForResponse(finalUser),
+                    client,
+                    apiKey: null
+                };
+            }
+
             // 1. User approval status update in DB
             const updatedUser = await this.userRepository.updateSafe(userId, {
                 isApproved: true,
                 approvalStatus: 'approved',
                 isActive: true,
+                role: normalizedRole,
+                permissions: clientService.buildPermissionsForRole ? clientService.buildPermissionsForRole(normalizedRole) : {
+                    canCreateApiKeys: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                    canManageUsers: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                    canViewAnalytics: true,
+                    canExportData: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                },
                 approvedBy: adminUser.userId,
                 approvedAt: new Date()
             });
 
             // 2. Client Workspace & API Key Auto-Generation
-            const { client, apiKey } = await clientService.createClientWithApiKeyForUser(updatedUser, adminUser);
+            const { client, apiKey } = await clientService.createClientWithApiKeyForUser(updatedUser, adminUser, normalizedRole);
 
-            // 3. User model update with created Client ID
+            // 3. User model update with created Client ID and role
             const finalUser = await User.findByIdAndUpdate(userId, {
-                clientId: client._id
+                clientId: client._id,
+                role: normalizedRole,
+                permissions: clientService.buildPermissionsForRole ? clientService.buildPermissionsForRole(normalizedRole) : {
+                    canCreateApiKeys: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                    canManageUsers: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                    canViewAnalytics: true,
+                    canExportData: normalizedRole === APPLICATION_ROLES.CLIENT_ADMIN,
+                }
             }, { new: true });
 
             logger.info("User approved with client and API key", {
                 userId,
+                role: normalizedRole,
                 approvedBy: adminUser.username,
                 clientId: client._id,
                 apiKey: apiKey.keyId

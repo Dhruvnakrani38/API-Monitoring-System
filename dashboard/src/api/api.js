@@ -70,8 +70,8 @@ export const authApi = {
         const response = await api.get('/auth/admin/pending-users');
         return response.data;
     },
-    approveUser: async (userId) => {
-        const response = await api.post(`/auth/admin/users/${userId}/approve`);
+    approveUser: async (userId, role = 'client_viewer', clientId = null) => {
+        const response = await api.post(`/auth/admin/users/${userId}/approve`, { role, clientId });
         return response.data;
     },
     rejectUser: async (userId) => {
@@ -139,7 +139,19 @@ export const clientApi = {
         return response.data;
     },
     getClientApiKeys: async (clientId) => {
-        const response = await api.get(`/admin/clients/${clientId}/api-keys`);
+        const response = await api.get(`/admin/clients/${clientId}/api/keys`);
+        return response.data;
+    },
+    revealClientApiKeys: async (clientId, password) => {
+        const response = await api.post(`/admin/clients/${clientId}/api/keys/reveal`, { password });
+        return response.data;
+    },
+    getClientUsers: async (clientId) => {
+        const response = await api.get(`/admin/clients/${clientId}/users`);
+        return response.data;
+    },
+    createClientUser: async (clientId, userData) => {
+        const response = await api.post(`/admin/clients/${clientId}/users`, userData);
         return response.data;
     },
 };

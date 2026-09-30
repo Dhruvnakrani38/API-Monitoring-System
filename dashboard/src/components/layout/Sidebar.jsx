@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     Settings,
     ShieldCheck,
+    UsersRound,
     Zap,
 } from 'lucide-react';
 import styles from '../../styles/modules/layout/Sidebar.module.scss';
@@ -33,7 +34,17 @@ const bottomNavItems = [
 ];
 
 // Ye component app ke main routes ko responsive sidebar mein dikhata hai.
-export function Sidebar({ isOpen, onClose }) {
+export function Sidebar({ isOpen, onClose, currentUser }) {
+    const visibleNavItems = [
+        ...navItems.filter((item) => item.href !== '/approvals' || currentUser?.role === 'super_admin'),
+        ...(currentUser?.role === 'client_admin' ? [{
+            title: 'Team',
+            href: '/team',
+            icon: UsersRound,
+            description: 'Manage client users',
+        }] : []),
+    ];
+
     return (
         <>
             {isOpen && (
@@ -61,7 +72,7 @@ export function Sidebar({ isOpen, onClose }) {
                     <nav className={styles.navigation} aria-label="Main navigation">
                         <div className={styles.navList}>
                             {/* Har main route ke liye icon aur active-state link banao. */}
-                            {navItems.map((item) => {
+                            {visibleNavItems.map((item) => {
                                 const Icon = item.icon;
                                 return (
                                     <NavLink

@@ -18,7 +18,7 @@ export class ApiHitRepository extends BaseRepository {
             const doc = new this.model(eventData);
             await doc.save();
 
-            this.logger.info("API hit saved to MongoDB", { eventId: eventData.eventId })
+            this.logger.debug("API hit saved to MongoDB", { eventId: eventData.eventId })
 
             return doc;
         } catch (error) {

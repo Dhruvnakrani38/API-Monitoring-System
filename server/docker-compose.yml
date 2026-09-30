@@ -94,8 +94,8 @@ services:
       JWT_SECRET: d65f785253c7e523944114b3499e690ffb049fe18f7dbfbf68891f273d02f19e36f799d4266df480e52c3cec6590f85560c199f79bbd78a38bb313a0446e70a4
       JWT_EXPIRES_IN: 24h
       # Rate Limiting
-      RATE_LIMIT_WINDOW_MS: 60000
-      RATE_LIMIT_MAX_REQUESTS: 100
+      RATE_LIMIT_WINDOW_MS: 1000
+      RATE_LIMIT_MAX_REQUESTS: 1200
     ports:
       - "5000:5000"
     volumes:
@@ -109,7 +109,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "node", "-e", "fetch('http://localhost:5000/health').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3

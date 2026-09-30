@@ -141,6 +141,19 @@ export class AuthController {
             const userId = req.user.userId;
             const result = await this.authService.getProfile(userId);
 
+            if (result.clientId) {
+                result.client = await this.clientService.getClientProfile(result.clientId);
+            }
+
+            if (result.approvedBy) {
+                const approver = await this.authService.getProfile(result.approvedBy);
+                result.approvedByUser = {
+                    username: approver.username,
+                    email: approver.email,
+                    role: approver.role,
+                };
+            }
+
             res.status(200).json(ResponseFormatter.success(result, "Profile fetched successfully", 200))
         } catch (error) {
             next(error)
@@ -173,8 +186,9 @@ export class AuthController {
     async approveUser(req, res, next) {
         try {
             const { userId } = req.params;
+            const { role, clientId } = req.body || {};
             // req.user = approve karne wala admin, clientService = client + key banane ke liye
-            const result = await this.authService.approveUser(userId, req.user, this.clientService);
+            const result = await this.authService.approveUser(userId, req.user, this.clientService, role, clientId);
             res.status(200).json(ResponseFormatter.success(result, "User approved with client and API key", 200))
         } catch (error) {
             next(error)
