@@ -3,6 +3,7 @@ import { ThemeSelector } from '../components/ThemeSelector';
 import { Palette } from 'lucide-react';
 import styles from '../styles/modules/pages/PageComponents.module.scss';
 
+// Ye page dashboard appearance preference ko theme selector ke zariye badalta hai.
 export function SettingsPage() {
     return (
         <div className={styles.pageContainer}>

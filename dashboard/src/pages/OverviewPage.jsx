@@ -6,12 +6,14 @@ import { ApiHitsChart, StatusDistributionChart } from '../components/charts';
 import { PageStatus } from '../components/ui';
 import styles from '../styles/modules/pages/PageComponents.module.scss';
 
+// Ye page fetched analytics ko summary, charts aur endpoint table mein dikhata hai.
 export function OverviewPage() {
     const { data, isPending, error, refetch } = useDashboardQuery();
 
     const stats = data?.data?.stats ?? null;
     const topEndpoints = data?.data?.topEndpoints ?? [];
 
+    // Summary counts ko status chart ke labels aur values mein badlo.
     const statusData = useMemo(() => {
         if (!stats) return null;
         return {

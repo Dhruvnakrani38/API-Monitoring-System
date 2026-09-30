@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api';
-import { Activity, Lock, User, Loader2 } from 'lucide-react';
+import { Activity, ArrowLeft, Lock, User, Loader2 } from 'lucide-react';
 import styles from '../styles/modules/Login.module.scss';
 
-function Login({ onLoginSuccess }) {
+function Login({ onLoginSuccess, onToggleSignup, onBack }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -40,6 +40,10 @@ function Login({ onLoginSuccess }) {
             </div>
 
             <div className={styles.loginCard}>
+                <button type="button" className={styles.backButton} onClick={onBack}>
+                    <ArrowLeft aria-hidden="true" />
+                    <span>Back</span>
+                </button>
                 <div className={styles.cardHeader}>
                     <div className={styles.logoContainer}>
                         <Activity />
@@ -113,19 +117,12 @@ function Login({ onLoginSuccess }) {
                     </form>
 
                     {onToggleSignup && (
-                        <div style={{ marginTop: '1.25rem', textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary, #94a3b8)' }}>
+                        <div className={styles.switchAuth}>
                             Don't have an account?{' '}
                             <button
                                 type="button"
                                 onClick={onToggleSignup}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--accent-color, #6366f1)',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    textDecoration: 'underline'
-                                }}
+                                className={styles.switchButton}
                             >
                                 Sign Up
                             </button>

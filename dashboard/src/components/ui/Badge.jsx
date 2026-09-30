@@ -1,6 +1,7 @@
 import { cn } from "../../lib/utils";
 import styles from "../../styles/modules/ui/Badge.module.scss";
 
+// Ye component status ke hisab se reusable badge variant select karta hai.
 export function Badge({ className, variant = "default", children, ...props }) {
     const variants = {
         default: styles.default,

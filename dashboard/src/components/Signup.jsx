@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api';
-import { UserPlus, Mail, Lock, User, Loader2, CheckCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import styles from '../styles/modules/Login.module.scss';
 
-function Signup({ onSignupSuccess, onToggleLogin }) {
+function Signup({ onSignupSuccess, onToggleLogin, onBack }) {
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -85,6 +85,10 @@ function Signup({ onSignupSuccess, onToggleLogin }) {
             </div>
 
             <div className={styles.loginCard}>
+                <button type="button" className={styles.backButton} onClick={onBack}>
+                    <ArrowLeft aria-hidden="true" />
+                    <span>Back</span>
+                </button>
                 <div className={styles.cardHeader}>
                     <div className={styles.logoContainer}>
                         <UserPlus />

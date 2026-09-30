@@ -4,11 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useChartTheme } from '../../hooks/useChartTheme';
 import styles from '../../styles/modules/charts/Charts.module.scss';
 
+// Ye component hit totals ko prepare karke traffic bar chart render karta hai.
 export function ApiHitsChart({ stats }) {
     const chart = useChartTheme();
 
     const isEmpty = !stats || (stats.totalHits === 0 && stats.successHits === 0 && stats.errorHits === 0);
 
+    // Chart ke labels, rang aur theme options yahan tayyar hote hain.
     const options = useMemo(() => ({
         chart: {
             type: 'bar',
@@ -33,6 +35,7 @@ export function ApiHitsChart({ stats }) {
         tooltip: { theme: chart.tooltipTheme },
     }), [chart.mode, chart.labelColor, chart.gridColor, chart.tooltipTheme]);
 
+    // API stats ko ApexCharts ke series format mein badla jata hai.
     const series = useMemo(() => [{
         name: 'Hits',
         data: [

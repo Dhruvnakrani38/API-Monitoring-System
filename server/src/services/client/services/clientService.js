@@ -1,3 +1,10 @@
+// =====================================================================
+// clientService.js
+// Kaam: Client management ka core business logic yahan hota hai.
+// Includes: Client create, Client user create, API key generate/manage,
+//           aur approval workflow ke liye createClientWithApiKeyForUser.
+// Reusability: clientController aur authService.approveUser dono use karte hain.
+// =====================================================================
 
 import logger from "../../../shared/config/logger.js";
 import { APPLICATION_ROLES, isValidClientRole } from "../../../shared/constants/roles.js";
@@ -7,17 +14,15 @@ import crypto from 'crypto';
 import User from "../../../shared/models/User.js";
 
 /**
- * ClientService class to handle business logic related to clients
- * This class is responsible for creating clients, managing client users, and handling API keys for clients. It interacts with the client repository, API key repository, and user repository to perform these operations.
+ * ClientService: Client se related saari business logic handle karta hai.
+ * Repositories: clientRepository, apiKeyRepository, userRepository inject hote hain.
  */
 export class ClientService {
     /**
-     * Constructor for ClientService
-     * @param {Object} dependencies - An object containing the required dependencies
-     * @param {Object} dependencies.clientRepository - The client repository instance
-     * @param {Object} dependencies.apiKeyRepository - The API key repository instance
-     * @param {Object} dependencies.userRepository - The user repository instance
-     * @throws Will throw an error if any of the required dependencies are missing
+     * Constructor: Teen repositories inject hoti hain (DI pattern).
+     * clientRepository: Client CRUD
+     * apiKeyRepository: API Key CRUD
+     * userRepository: User update ke liye (clientId assign karna)
      */
     constructor(dependencies) {
         if (!dependencies) {
@@ -42,54 +47,56 @@ export class ClientService {
     };
 
     /**
-     * Format client object for response by removing sensitive information
-     * @param {Object} user - The client user object
-     * @returns {Object} - The formatted client user object
+     * formatClientForResponse: User object se password remove karta hai.
+     * Reusability: createClientUser ke response format karne ke liye.
      */
     formatClientForResponse(user) {
         const userObj = user.toObject ? user.toObject() : { ...user };
-        delete userObj.password;
+        delete userObj.password; // Password field hata do - sensitive data
         return userObj;
     };
 
     /**
-     * Generate unique slug from name
-     * @param {String} name - The name to generate the slug from
-     * @returns {String} - The generated slug
+     * generateSlug: Client ke naam se URL-friendly slug generate karta hai.
+     * Example: "My Company" => "my-company"
+     * Reusability: createClient me slug banana ke liye use hota hai.
      */
     generateSlug(name) {
         return name.toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
+            .replace(/[^a-z0-9\s-]/g, '') // Special chars hata do
+            .replace(/\s+/g, '-')          // Spaces ko dash se replace karo
+            .replace(/-+/g, '-')           // Multiple dashes ko ek karo
             .trim()
     }
 
     /**
-     * Create a new client
-     * @param {Object} clientData - The client data
-     * @param {Object} adminUser - The admin user creating the client
-     * @returns {Object} - The created client
+     * createClient: Naya client (organization) create karna.
+     * Slug generate karta hai aur duplicate check karta hai.
+     * Reusability: clientController.createClient aur
+     *              createClientWithApiKeyForUser me use hota hai.
      */
     async createClient(clientData, adminUser) {
         try {
             const { name, email, description, website } = clientData;
 
+            // URL-friendly slug generate karo name se
             const slug = this.generateSlug(name);
 
+            // Duplicate slug check - same name wala client already exist toh nahi karta?
             const exisitingClient = await this.clientRepository.findBySlug(slug);
 
             if (exisitingClient) {
                 throw new AppError(`Client with slug ${slug} already exists`, 400);
             }
 
+            // MongoDB me save karo
             const client = await this.clientRepository.create({
                 name,
                 slug,
                 email,
                 description,
                 website,
-                createdBy: adminUser.userId
+                createdBy: adminUser.userId // Kis admin ne banaya
             });
 
             return client;
@@ -100,14 +107,16 @@ export class ClientService {
     };
 
     /**
-     * Create a client and generate API key for an approved user
-     * @param {Object} userData - The approved user data
-     * @param {Object} adminUser - The admin user approving
-     * @returns {Object} - The created client and API key
+     * createClientWithApiKeyForUser: Admin approval ke waqt use hota hai.
+     * Yeh ek atomic-ish operation hai:
+     *   1. User ke naam par client create karo
+     *   2. User ke record me clientId update karo
+     *   3. API key generate karo
+     * Reusability: authService.approveUser yahi call karta hai.
      */
     async createClientWithApiKeyForUser(userData, adminUser) {
         try {
-            // Create client from user data
+            // Step 1: User ke username se client data banao
             const clientData = {
                 name: userData.username + "'s Client",
                 email: userData.email,
@@ -117,10 +126,11 @@ export class ClientService {
 
             const client = await this.createClient(clientData, adminUser);
 
-            // Update user with clientId using the User model directly
+            // Step 2: User record me naya clientId update karo
+            // (approve hone ke baad user ka clientId set ho jaata hai)
             await User.findByIdAndUpdate(userData._id, { clientId: client._id });
 
-            // Generate API key for the new client
+            // Step 3: Default API key generate karo
             const keyData = {
                 name: "Default API Key",
                 description: "Auto-generated API key for approved user",
@@ -146,45 +156,48 @@ export class ClientService {
     }
 
     /**
-     * Check if a user has access to a specific client
-     * @param {Object} user - The user object
-     * @param {String} clientId - The client ID
-     * @returns {Boolean} - True if the user has access, false otherwise
+     * canUserAccessClient: User ke paas kisi client ka access hai ya nahi check karna.
+     * Super admin = har client access kar sakta hai.
+     * Normal user = sirf apne clientId wala client access kar sakta hai.
+     * Reusability: createClientUser, createApiKey, getClientApiKeys me use hota hai.
      */
     canUserAccessClient(user, clientId) {
         if (user.role === APPLICATION_ROLES.SUPER_ADMIN) {
-            return true
+            return true // Super admin = sabka access
         }
 
+        // Normal user: apna clientId match karo
         return user.clientId && user.clientId.toString() === clientId.toString()
     }
 
     /**
-     * Create a new client user for a specific client
-     * @param {String} clientId - The client ID
-     * @param {Object} userData - The user data
-     * @param {Object} adminUser - The admin user creating the client user
-     * @returns {Object} - The created client user
+     * createClientUser: Kisi existing client ke liye naya user banana.
+     * Role-based permissions automatically assign hoti hain:
+     *   - CLIENT_ADMIN: sabki permissions
+     *   - CLIENT_VIEWER: sirf analytics dekh sakta hai
      */
     async createClientUser(clientId, userData, adminUser) {
         try {
+            // Pehle check karo: requester ke paas access hai?
             if (!this.canUserAccessClient(adminUser, clientId)) {
                 throw new AppError("Access denied", 403)
             };
 
             const { username, email, password, role = APPLICATION_ROLES.CLIENT_VIEWER } = userData;
 
+            // Valid role check (client_admin ya client_viewer)
             if (!isValidClientRole(role)) {
                 throw new AppError("Invalid role for client user", 400)
             };
 
+            // Client exist karta hai?
             const client = await this.clientRepository.findById(clientId);
 
             if (!client) {
                 throw new AppError("Client not found", 404)
             };
 
-            // Set permissions based on role
+            // Default permissions: sirf analytics view
             let permissions = {
                 canCreateApiKeys: false,
                 canManageUsers: false,
@@ -192,7 +205,7 @@ export class ClientService {
                 canExportData: false,
             };
 
-            // If the role is client admin, update permissions accordingly
+            // CLIENT_ADMIN ko zyada permissions milti hain
             if (role === APPLICATION_ROLES.CLIENT_ADMIN) {
                 permissions = {
                     canCreateApiKeys: true,
@@ -202,6 +215,7 @@ export class ClientService {
                 }
             };
 
+            // User create karo userRepository ke through
             const user = await this.userRepository.create({
                 username,
                 email,
@@ -217,6 +231,7 @@ export class ClientService {
                 role
             })
 
+            // Password exclude karke return karo
             return this.formatClientForResponse(user)
 
         } catch (error) {
@@ -226,34 +241,38 @@ export class ClientService {
     };
 
     /**
-     * Generate a new API key
-     * @returns {String} - The generated API key
+     * generateApiKey: Cryptographically secure API key generate karta hai.
+     * Format: apim_<40 char hex string>
+     * Reusability: createApiKey method me use hota hai.
      */
     generateApiKey() {
         const prefix = "apim";
-        const randomBytes = crypto.randomBytes(20).toString("hex");
+        const randomBytes = crypto.randomBytes(20).toString("hex"); // 20 bytes = 40 hex chars
         return `${prefix}_${randomBytes}`
     }
 
     /**
-     * Create a new API key for a specific client
-     * @param {String} clientId - The client ID
-     * @param {Object} keyData - The API key data
-     * @param {Object} user - The user creating the API key
-     * @returns {Object} - The created API key
+     * createApiKey: Kisi client ke liye naya API key create karna.
+     * Sirf SUPER_ADMIN aur CLIENT_ADMIN yeh kar sakte hain.
+     * keyId = UUID (unique identifier), keyValue = actual secret key.
+     * Reusability: clientController.createApiKey aur
+     *              createClientWithApiKeyForUser me use hota hai.
      */
     async createApiKey(clientId, keyData, user) {
         try {
+            // Client exist karta hai?
             const client = await this.clientRepository.findById(clientId);
 
             if (!client) {
                 throw new AppError("Client not found", 404)
             };
 
+            // Access check
             if (!this.canUserAccessClient(user, clientId)) {
                 throw new AppError("Access denied", 403)
             };
 
+            // Sirf admin roles API key create kar sakte hain
             if (!(user.role === APPLICATION_ROLES.SUPER_ADMIN || user.role === APPLICATION_ROLES.CLIENT_ADMIN)) {
                 throw new AppError("Access denied - Only Super Admin and Client Admin can create API keys", 403)
             };
@@ -261,9 +280,11 @@ export class ClientService {
 
             const { name, description, environment = "production" } = keyData;
 
+            // UUID = unique keyId, crypto = secure random keyValue
             const keyId = uudiv4();
             const keyValue = this.generateApiKey();
 
+            // Database me save karo
             const apiKey = await this.apiKeyRepository.create({
                 keyId,
                 keyValue,
@@ -283,10 +304,9 @@ export class ClientService {
 
 
     /**
-     * Get all API keys for a specific client
-     * @param {String} clientId - The client ID
-     * @param {Object} user - The user requesting the API keys
-     * @returns {Array} - The list of API keys
+     * getClientApiKeys: Kisi client ki saari API keys list karna.
+     * keyValue response me nahi aata (security ke liye strip hoti hai).
+     * Reusability: clientController.getClientApiKeys me use hota hai.
      */
     async getClientApiKeys(clientId, user) {
         try {
@@ -296,9 +316,10 @@ export class ClientService {
 
             const apiKeys = await this.apiKeyRepository.findByClientId(clientId);
 
+            // keyValue field hata do - actual key client ko pehle create pe dikhti hai
             const formattedResponse = apiKeys.map(key => {
                 const keyObj = key.toObject ? key.toObject() : key;
-                delete keyObj.keyValue;
+                delete keyObj.keyValue; // Sensitive data remove karo
                 return keyObj
             })
 
@@ -310,19 +331,27 @@ export class ClientService {
         }
     };
 
+    /**
+     * getClientByApiKey: API key value se client dhundhna.
+     * validateApiKey middleware me use hota hai incoming requests authenticate karne ke liye.
+     * Expired ya inactive keys null return karti hain.
+     * Reusability: validateApiKey.js middleware yahi call karta hai.
+     */
     async getClientByApiKey(apiKey) {
         try {
             const key = await this.apiKeyRepository.findByKeyValue(apiKey);
 
+            // Key nahi mili to null
             if (!key) {
                 return null;
             }
 
+            // Expired key check
             if (key.isExpired()) {
                 return null;
             }
 
-            // Get the populated client from the key
+            // Populated client return karo (key ke saath)
             const client = key.clientId;
 
             return {

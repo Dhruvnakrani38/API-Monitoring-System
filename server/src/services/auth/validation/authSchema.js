@@ -1,23 +1,35 @@
+// =====================================================================
+// authSchema.js
+// Kaam: Auth module ke liye request body validation schemas define karta hai.
+// validate() middleware in schemas ko use karta hai fields validate karne ke liye.
+// Reusability: authRouter.js me validate(schema) middleware ke saath use hota hai.
+// =====================================================================
+
 import { isValidRole } from "../../../shared/constants/roles.js";
 
 /**
- * Validation schemas for the Auth module.
+ * onboardSuperAdminSchema: Super admin onboarding ke liye validation rules.
+ * username, email, password - teeno required hain.
+ * password: minimum 6 characters.
  */
 export const onboardSuperAdminSchema = {
     username: {
-        required: true,
+        required: true,   // Username must hona chahiye
     },
     email: {
-        required: true,
+        required: true,   // Email must hona chahiye
     },
     password: {
-        required: true,
-        minLength: 6
+        required: true,   // Password must hona chahiye
+        minLength: 6      // Kam se kam 6 characters
     }
 }
 
 /**
- * Validation schema for user registration.
+ * registrationSchema: User registration aur public signup ke liye.
+ * username, email, password required; role optional.
+ * role validation: isValidRole function se check hota hai ki valid role hai ya nahi.
+ * Reusability: /register aur /signup dono routes me use hota hai.
  */
 export const registrationSchema = {
     username: {
@@ -31,16 +43,18 @@ export const registrationSchema = {
         minLength: 6
     },
     role: {
-        required: false,
+        required: false,  // Role optional hai - default 'client_viewer' hoga
         custom: (value) => {
+            // Agar role diya gaya hai to valid hona chahiye
             if (!value) return null;
-            return isValidRole(value) ? null : 'Invalid role';
+            return isValidRole(value) ? null : 'Invalid role'; // null = no error
         }
     },
 }
 
 /**
- * Validation schema for user login.
+ * loginSchema: Login ke liye validation rules.
+ * username aur password dono required hain.
  */
 export const loginSchema = {
     username: { required: true },

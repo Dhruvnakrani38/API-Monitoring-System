@@ -7,6 +7,7 @@ import { useDashboardQuery } from '../../hooks/useDashboardQuery';
 import { QUERY_KEYS } from '../../constants';
 import styles from '../../styles/modules/layout/DashboardLayout.module.scss';
 
+// Ye layout sidebar, page header aur shared account actions ko wrap karta hai.
 export function DashboardLayout({ children, onLogout }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const { currentTheme } = useTheme();
@@ -18,6 +19,7 @@ export function DashboardLayout({ children, onLogout }) {
         ? new Date(dataUpdatedAt).toLocaleTimeString()
         : '--';
 
+    // Dashboard query ko invalidate karke naya data fetch karwata hai.
     const handleRefresh = () => {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     };

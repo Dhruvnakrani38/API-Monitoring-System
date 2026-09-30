@@ -4,6 +4,7 @@ import styles from '../styles/modules/ThemeSelector.module.scss';
 
 const THEME_ICONS = { light: Sun, purple: Moon };
 
+// Ye component theme choices dikhata hai aur active theme ko highlight karta hai.
 export function ThemeSelector() {
     const { currentTheme, themes, switchTheme } = useTheme();
 
@@ -15,6 +16,7 @@ export function ThemeSelector() {
             </div>
 
             <div className={styles.themeGrid}>
+                {/* Har theme ke liye keyboard aur click se chalne wala option banao. */}
                 {Object.entries(themes).map(([themeKey, theme]) => {
                     const isActive = currentTheme === themeKey;
                     const Icon = THEME_ICONS[themeKey] ?? Moon;
@@ -29,6 +31,7 @@ export function ThemeSelector() {
                             aria-pressed={isActive}
                             aria-label={`Switch to ${theme.name} theme`}
                             onKeyDown={(e) => {
+                                // Enter aur Space ko click jaise theme switch karne do.
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
                                     switchTheme(themeKey);

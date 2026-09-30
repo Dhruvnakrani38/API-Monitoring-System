@@ -1,6 +1,7 @@
 import { cn } from "../../lib/utils";
 import styles from "../../styles/modules/ui/Button.module.scss";
 
+// Ye component props ke mutabik button ka visual variant aur size lagata hai.
 export function Button({ className, variant = "default", size = "default", children, ...props }) {
     const variants = {
         default: styles.default,

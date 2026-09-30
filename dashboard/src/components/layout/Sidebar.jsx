@@ -32,6 +32,7 @@ const bottomNavItems = [
     },
 ];
 
+// Ye component app ke main routes ko responsive sidebar mein dikhata hai.
 export function Sidebar({ isOpen, onClose }) {
     return (
         <>
@@ -59,6 +60,7 @@ export function Sidebar({ isOpen, onClose }) {
                     </div>
                     <nav className={styles.navigation} aria-label="Main navigation">
                         <div className={styles.navList}>
+                            {/* Har main route ke liye icon aur active-state link banao. */}
                             {navItems.map((item) => {
                                 const Icon = item.icon;
                                 return (
@@ -81,6 +83,7 @@ export function Sidebar({ isOpen, onClose }) {
                         </div>
                     </nav>
                     <div className={styles.bottomNavigation}>
+                        {/* Secondary pages ko sidebar ke neeche alag rakho. */}
                         {bottomNavItems.map((item) => {
                             const Icon = item.icon;
                             return (

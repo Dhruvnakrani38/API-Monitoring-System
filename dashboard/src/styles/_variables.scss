@@ -1,3 +1,4 @@
+// Spacing scale layout elements ke beech consistent gaps define karti hai.
 $spacing: (
   0: 0,
   1: 0.25rem,
@@ -19,6 +20,7 @@ $spacing: (
   64: 16rem,
 );
 
+// Breakpoints responsive layouts ke viewport thresholds define karte hain.
 $breakpoints: (
   sm: 640px,
   md: 768px,
@@ -27,6 +29,7 @@ $breakpoints: (
   "2xl": 1536px,
 );
 
+// Font families, sizes aur weights typography ke shared tokens hain.
 $font-sans:
   "Work Sans",
   "Lato",
@@ -75,6 +78,7 @@ $font-weights: (
   black: 900,
 );
 
+// Z-index values overlay aur layered UI ki stacking order control karte hain.
 $z-index: (
   auto: auto,
   0: 0,
@@ -85,6 +89,7 @@ $z-index: (
   50: 50,
 );
 
+// Radius aur spacing aliases components ke repeated dimensions share karte hain.
 $border-radius: (
   none: 0,
   sm: 0.125rem,
@@ -121,6 +126,7 @@ $space-16: 4rem;
 $space-20: 5rem;
 $space-24: 6rem;
 
+// Shadow tokens card aur overlay depth ke reusable levels define karte hain.
 $shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 $shadow-md:
   0 4px 6px -1px rgb(0 0 0 / 0.1),

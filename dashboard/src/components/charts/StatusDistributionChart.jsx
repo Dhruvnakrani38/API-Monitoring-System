@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useChartTheme } from '../../hooks/useChartTheme';
 import styles from '../../styles/modules/charts/Charts.module.scss';
 
+// Ye component success aur error requests ka status donut chart dikhata hai.
 export function StatusDistributionChart({ data }) {
     const chart = useChartTheme();
 
+    // Donut chart ke labels, colors aur center summary yahan configure hote hain.
     const options = useMemo(() => ({
         chart: { type: 'donut', background: 'transparent' },
         theme: { mode: chart.mode },
@@ -28,6 +30,7 @@ export function StatusDistributionChart({ data }) {
                             fontSize: '24px',
                             fontWeight: 'bold',
                             color: chart.labelColor,
+                            // Center value ko readable request count mein format karo.
                             formatter: (val) => Number(val).toLocaleString(),
                         },
                         total: {
@@ -35,6 +38,7 @@ export function StatusDistributionChart({ data }) {
                             label: 'Total Requests',
                             fontSize: '14px',
                             color: chart.labelColor,
+                            // Sabhi slices jodkar center mein total requests dikhaye.
                             formatter: (w) => w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString(),
                         },
                     },
@@ -44,10 +48,12 @@ export function StatusDistributionChart({ data }) {
         legend: { position: 'bottom', labels: { colors: chart.labelColor } },
         tooltip: {
             theme: chart.tooltipTheme,
+            // Tooltip value ke saath request unit bhi dikhaye.
             y: { formatter: (v) => `${Number(v).toLocaleString()} requests` },
         },
     }), [data?.labels, chart.mode, chart.labelColor, chart.tooltipTheme]);
 
+    // API se aaye status counts ko donut slices ke values mein use karo.
     const series = useMemo(() => data?.values ?? [], [data?.values]);
 
     const isEmpty = !series.length || series.every((v) => v === 0);

@@ -2,6 +2,7 @@ import { BaseRepository } from "./BaseRepository.js";
 
 
 export class ApiHitRepository extends BaseRepository {
+    // Repository ko Mongo model aur shared logger ke saath initialize karo.
     constructor({ model, logger: l } = {}) {
         super({ logger: l })
         if (!model) {
@@ -11,6 +12,7 @@ export class ApiHitRepository extends BaseRepository {
     }
 
 
+    // Raw event persist karo; duplicate event ID ko safely skip karo.
     async save(eventData) {
         try {
             const doc = new this.model(eventData);
@@ -29,6 +31,7 @@ export class ApiHitRepository extends BaseRepository {
         }
     }
 
+    // Filter, pagination aur sort options ke saath raw hits read karo.
     async find(filer = {}, options = {}) {
         try {
             const { limit = 100, skip = 0, sort = { timestamp: -1 } } = options;
@@ -42,6 +45,7 @@ export class ApiHitRepository extends BaseRepository {
     };
 
 
+    // Diye gaye filters se matching raw hit documents ki ginti lo.
     async count(filters = {}) {
         try {
             const count = await this.model.countDocuments(filters);
@@ -52,6 +56,7 @@ export class ApiHitRepository extends BaseRepository {
         }
     }
 
+    // Retention cutoff se purane raw hit documents delete karo.
     async deleteOldHits(beforeDate) {
         try {
             const result = await this.model.deleteMany({ timestamp: { $lt: beforeDate } });

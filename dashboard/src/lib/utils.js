@@ -1,9 +1,11 @@
 import { clsx } from 'clsx';
 
+// Ye helper conditional class names ko ek string mein jodta hai.
 export function cn(...inputs) {
     return clsx(inputs);
 }
 
+// Ye HTTP method ke liye badge background, text aur border colors deta hai.
 export function getMethodColor(method) {
     const palette = {
         GET: { background: 'rgba(59,130,246,0.2)', color: '#60a5fa', borderColor: 'rgba(59,130,246,0.5)' },
@@ -15,6 +17,7 @@ export function getMethodColor(method) {
     return palette[method] ?? { background: 'rgba(100,116,139,0.2)', color: '#94a3b8', borderColor: 'rgba(100,116,139,0.5)' };
 }
 
+// Ye status code ko success, warning ya destructive badge variant mein map karta hai.
 export function getStatusVariant(status) {
     if (status >= 200 && status < 300) return 'success';
     if (status >= 400 && status < 500) return 'warning';

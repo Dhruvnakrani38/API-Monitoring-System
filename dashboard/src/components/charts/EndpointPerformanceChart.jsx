@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useChartTheme } from '../../hooks/useChartTheme';
 import styles from '../../styles/modules/charts/Charts.module.scss';
 
+// Ye component request volume ke hisab se endpoints ka horizontal chart banata hai.
 export function EndpointPerformanceChart({ data }) {
     const chart = useChartTheme();
 
+    // Chart options endpoints ko categories aur active theme ko colors se jodte hain.
     const options = useMemo(() => ({
         chart: {
             type: 'bar',
@@ -25,6 +27,7 @@ export function EndpointPerformanceChart({ data }) {
             enabled: true,
             offsetX: 30,
             style: { fontSize: '12px', colors: [chart.labelColor] },
+            // Hit count ko chart label mein readable number ki tarah dikhaye.
             formatter: (v) => Number(v).toLocaleString(),
         },
         grid: { borderColor: chart.gridColor, strokeDashArray: 4 },
@@ -39,6 +42,7 @@ export function EndpointPerformanceChart({ data }) {
         tooltip: { theme: chart.tooltipTheme },
     }), [data?.endpoints, chart.mode, chart.labelColor, chart.gridColor, chart.tooltipTheme]);
 
+    // Endpoint hit values ko chart ke single data series mein rakho.
     const series = useMemo(() => [
         { name: 'Total Hits', data: data?.hits ?? [] },
     ], [data?.hits]);

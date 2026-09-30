@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import Login from './components/Login';
 import Signup from './components/Signup';
+import LandingPage from './components/LandingPage';
 import { authApi } from './api/api';
 import { DashboardLayout } from './components/layout';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -19,7 +20,7 @@ const pageFallback = (
 
 function AuthGate() {
     const [isAuthenticated, setIsAuthenticated] = useState(null);
-    const [authView, setAuthView] = useState('login'); // 'login' | 'signup'
+    const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'signup'
     const queryClient = useQueryClient();
 
     useEffect(() => {
@@ -39,6 +40,7 @@ function AuthGate() {
     const handleLogout = useCallback(async () => {
         try { await authApi.logout(); } catch { }
         queryClient.clear();
+        setAuthView('landing');
         setIsAuthenticated(false);
     }, [queryClient]);
 
@@ -46,6 +48,7 @@ function AuthGate() {
         if (isAuthenticated !== true) return;
         const handle401 = () => {
             queryClient.clear();
+            setAuthView('landing');
             setIsAuthenticated(false);
         };
         window.addEventListener('auth:unauthorized', handle401);
@@ -61,11 +64,21 @@ function AuthGate() {
     }
 
     if (!isAuthenticated) {
+        if (authView === 'landing') {
+            return (
+                <LandingPage
+                    onLogin={() => setAuthView('login')}
+                    onSignup={() => setAuthView('signup')}
+                />
+            );
+        }
+
         if (authView === 'signup') {
             return (
                 <Signup
                     onSignupSuccess={() => setAuthView('login')}
                     onToggleLogin={() => setAuthView('login')}
+                    onBack={() => setAuthView('landing')}
                 />
             );
         }
@@ -73,6 +86,7 @@ function AuthGate() {
             <Login
                 onLoginSuccess={handleLoginSuccess}
                 onToggleSignup={() => setAuthView('signup')}
+                onBack={() => setAuthView('landing')}
             />
         );
     }

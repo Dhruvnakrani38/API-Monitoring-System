@@ -1,7 +1,7 @@
 .mobileOverlay {
     position: fixed;
     inset: 0;
-    background-color: hsl(var(--background) / 0.8);
+    background-color: rgba(8, 13, 11, 0.72);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
     z-index: 40;
@@ -19,10 +19,8 @@
     height: 100vh;
     transition: transform 300ms ease-in-out;
     width: 16rem;
-    border-right: 1px solid hsl(var(--border) / 0.4);
-    background-color: hsl(var(--card) / 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    border-right: 1px solid var(--shell-line);
+    background-color: var(--shell-panel);
 
     &.closed {
         transform: translateX(-100%);
@@ -32,10 +30,6 @@
         }
     }
 
-    // Support for backdrop-filter where available
-    @supports (backdrop-filter: blur(8px)) {
-        background-color: hsl(var(--card) / 0.6);
-    }
 }
 
 .sidebarContainer {
@@ -50,13 +44,15 @@
     gap: 0.75rem;
     height: 4rem;
     padding: 0 1.5rem;
-    border-bottom: 1px solid hsl(var(--border) / 0.4);
+    border-bottom: 1px solid var(--shell-line);
 }
 
 .logoIcon {
     width: 2.5rem;
     height: 2.5rem;
-    border-radius: 0.75rem;
+    border: 1px solid rgba(198, 239, 104, 0.55);
+    border-radius: 5px;
+    background: rgba(198, 239, 104, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -64,7 +60,7 @@
     svg {
         width: 1.25rem;
         height: 1.25rem;
-        color: white;
+        color: var(--shell-accent);
     }
 }
 
@@ -72,11 +68,14 @@
     font-weight: 700;
     font-size: 1.125rem;
     margin: 0;
+    color: var(--shell-ink);
+    background: none;
+    -webkit-text-fill-color: currentColor;
 }
 
 .logoText p {
     font-size: 0.75rem;
-    color: hsl(var(--muted-foreground));
+    color: var(--shell-muted);
     margin: 0;
 }
 
@@ -102,17 +101,17 @@
     font-weight: 500;
     transition: all 200ms ease;
     text-decoration: none;
-    color: hsl(var(--muted-foreground));
+    color: var(--shell-muted);
 
     &:hover {
-        background-color: hsl(var(--accent) / 0.5);
-        color: hsl(var(--accent-foreground));
+        background-color: color-mix(in srgb, var(--shell-accent) 10%, var(--shell-panel));
+        color: var(--shell-ink);
     }
 
     &.active {
-        background-color: hsl(var(--primary));
-        color: hsl(var(--primary-foreground));
-        box-shadow: 0 10px 15px -3px hsl(var(--primary) / 0.2);
+        background-color: var(--shell-accent);
+        color: #17200f;
+        box-shadow: none;
     }
 
     svg {
@@ -126,7 +125,7 @@
     }
 
     &.active svg {
-        color: hsl(var(--primary-foreground));
+        color: #17200f;
     }
 }
 
@@ -135,6 +134,6 @@
 }
 
 .bottomNavigation {
-    border-top: 1px solid hsl(var(--border) / 0.4);
+    border-top: 1px solid var(--shell-line);
     padding: 0.75rem;
 }

@@ -1,12 +1,23 @@
+// =====================================================================
+// authController.js
+// Kaam: Authentication aur user management ke saare HTTP endpoints yahan handle hote hain.
+// Includes: SuperAdmin onboarding, Public signup, Admin registration, Login, Profile, Logout,
+//           aur Admin approval/rejection workflows.
+// Reusability: authRouter.js me use hota hai. authService se business logic milti hai.
+// =====================================================================
+
 import config from "../../../shared/config/index.js";
 import { APPLICATION_ROLES } from "../../../shared/constants/roles.js";
 import ResponseFormatter from "../../../shared/utils/responseFormatter.js"
 
 /**
- * @description AuthController handles user authentication and authorization related operations such as onboarding super admin, user registration, login, fetching user profile, and logout.
- * It interacts with the AuthService to perform these operations and formats the responses using ResponseFormatter.
+ * AuthController: Authentication se related saare request handle karta hai.
+ * authService se actual business logic karvata hai aur
+ * ResponseFormatter se consistent API response format deta hai.
  */
 export class AuthController {
+    // Constructor: authService aur clientService inject hote hain (DI pattern).
+    // clientService approveUser me use hoti hai - client aur API key banane ke liye.
     constructor(authService, clientService) {
         if (!authService) {
             throw new Error("authService is Required");
@@ -17,21 +28,23 @@ export class AuthController {
     };
 
     /**
-     * Onboards a new super admin user.
-     * @param {Request} req - The request object containing user details.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * onboardSuperAdmin: Pehli baar super admin banana ke liye.
+     * POST /api/auth/onboard-super-admin
+     * Body: { username, email, password }
+     * JWT token cookie me set hota hai (httpOnly).
      */
     async onboardSuperAdmin(req, res, next) {
         try {
             const { username, email, password } = req.body;
 
+            // Super admin role hardcode hai - koi user change nahi kar sakta
             const superAdminData = {
                 username, email, password, role: APPLICATION_ROLES.SUPER_ADMIN
             };
 
             const { token, user } = await this.authService.onboardSuperAdmin(superAdminData);
 
+            // JWT token httpOnly cookie me set karo (browser JS access nahi kar sakta - secure)
             res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
@@ -45,20 +58,22 @@ export class AuthController {
     };
 
     /**
-     * Public signup for new users (requires admin approval).
-     * @param {Request} req - The request object containing user details.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * publicSignup: Koi bhi naya user yahan sign up kar sakta hai.
+     * POST /api/auth/signup (No authentication required)
+     * Account 'pending' state me banta hai - admin approval ke baad active hoga.
+     * Reusability: Frontend Signup.jsx yahi call karta hai.
      */
     async publicSignup(req, res, next) {
         try {
             const { username, email, password } = req.body;
             const userData = {
                 username, email, password
+                // Note: role nahi bheja - default 'client_viewer' aur approvalStatus 'pending' hoga
             };
 
             const { user, message } = await this.authService.publicSignup(userData);
 
+            // 201 Created - account bana, lekin abhi active nahi hai
             res.status(201).json(ResponseFormatter.success(user, message, 201))
         } catch (error) {
             next(error)
@@ -66,10 +81,9 @@ export class AuthController {
     }
 
     /**
-     * Registers a new user (admin only - no approval needed).
-     * @param {Request} req - The request object containing user details.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * register: Admin ke through directly user banana (approval skip).
+     * POST /api/auth/register (authenticate + authorize SUPER_ADMIN required)
+     * Admin sirf internal users ke liye yeh use kare.
      */
     async register(req, res, next) {
         try {
@@ -80,6 +94,7 @@ export class AuthController {
 
             const { token, user } = await this.authService.register(userData);
 
+            // JWT cookie set karo
             res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
@@ -93,16 +108,17 @@ export class AuthController {
     };
 
     /**
-     * Logs in a user.
-     * @param {Request} req - The request object containing user credentials.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * login: Username + Password se login karna.
+     * POST /api/auth/login
+     * JWT token cookie me set hota hai. Frontend page refresh pe bhi logged-in rahega.
+     * Reusability: Login.jsx yahi API call karta hai.
      */
     async login(req, res, next) {
         try {
             const { username, password } = req.body;
             const { user, token } = await this.authService.login(username, password);
 
+            // JWT cookie me store karo (frontend ko manually handle nahi karna)
             res.cookie("authToken", token, {
                 httpOnly: config.cookie.httpOnly,
                 secure: config.cookie.secure,
@@ -116,10 +132,9 @@ export class AuthController {
     };
 
     /**
-     * Fetches the profile of the logged-in user.
-     * @param {Request} req - The request object containing user details.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * getProfile: Logged-in user ka profile fetch karna.
+     * GET /api/auth/profile (authenticate required)
+     * JWT se userId extract hota hai, phir DB se profile milti hai.
      */
     async getProfile(req, res, next) {
         try {
@@ -133,10 +148,9 @@ export class AuthController {
     }
 
     /**
-     * Logs out the currently logged-in user.
-     * @param {Request} req - The request object.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * logout: User ko logout karna - cookie clear karo.
+     * GET /api/auth/logout
+     * Server side pe sirf cookie delete hoti hai (JWT stateless hai).
      */
     async logout(req, res, next) {
         try {
@@ -148,14 +162,18 @@ export class AuthController {
     }
 
     /**
-     * Approves a pending user registration.
-     * @param {Request} req - The request object containing user ID.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * approveUser: Pending user ko approve karna.
+     * POST /api/auth/admin/users/:userId/approve (SUPER_ADMIN only)
+     * Approve hone pe automatically:
+     *   1. User ka status 'approved' + isActive = true hota hai
+     *   2. Client record create hota hai
+     *   3. API key generate hoti hai
+     * Reusability: PendingApprovalsPage.jsx se call hota hai.
      */
     async approveUser(req, res, next) {
         try {
             const { userId } = req.params;
+            // req.user = approve karne wala admin, clientService = client + key banane ke liye
             const result = await this.authService.approveUser(userId, req.user, this.clientService);
             res.status(200).json(ResponseFormatter.success(result, "User approved with client and API key", 200))
         } catch (error) {
@@ -164,10 +182,9 @@ export class AuthController {
     }
 
     /**
-     * Rejects a pending user registration.
-     * @param {Request} req - The request object containing user ID and rejection reason.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * rejectUser: Pending user ko reject karna.
+     * POST /api/auth/admin/users/:userId/reject (SUPER_ADMIN only)
+     * Body: { reason } - rejection reason optional
      */
     async rejectUser(req, res, next) {
         try {
@@ -181,10 +198,9 @@ export class AuthController {
     }
 
     /**
-     * Gets all pending user registrations.
-     * @param {Request} req - The request object.
-     * @param {Response} res - The response object used to send the response.
-     * @param {Function} next - The next middleware function in the request-response cycle.
+     * getPendingUsers: Saare pending approval requests fetch karna.
+     * GET /api/auth/admin/pending-users (SUPER_ADMIN only)
+     * PendingApprovalsPage.jsx yahi use karta hai list dikhane ke liye.
      */
     async getPendingUsers(req, res, next) {
         try {

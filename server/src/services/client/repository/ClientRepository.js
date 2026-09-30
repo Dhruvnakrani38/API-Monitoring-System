@@ -1,20 +1,28 @@
+// =====================================================================
+// ClientRepository.js
+// Kaam: MongoDB me Client collection ke database operations.
+// BaseClientRepository extend karta hai - actual DB calls Mongoose se.
+// Reusability: clientService, analyticsController, aur validateApiKey me use hota hai.
+// =====================================================================
+
 import BaseClientRepository from "./BaseClientRepository.js";
 import Client from "../../../shared/models/Client.js";
 import logger from "../../../shared/config/logger.js"
 
 /**
- * MongoClientRepository class to handle database operations related to clients
- * This class extends the BaseClientRepository and provides implementations for creating clients, finding clients by ID or slug, and finding/counting clients based on filters. It uses Mongoose for database interactions and includes error handling and logging for each operation.
+ * MongoClientRepository: Client collection ke liye MongoDB CRUD implementation.
+ * create, findById, findBySlug, find, count methods provide karta hai.
  */
 class MongoClientRepository extends BaseClientRepository {
+    // Constructor: Client Mongoose model pass karo
     constructor() {
         super(Client)
     }
 
     /**
-     * Creates a new client
-     * @param {Object} clientData 
-     * @returns {Promise<Object>}
+     * create: Naya client MongoDB me save karna.
+     * clientData: { name, slug, email, description, website, createdBy }
+     * Reusability: clientService.createClient me use hota hai.
      */
     async create(clientData) {
         try {
@@ -34,9 +42,9 @@ class MongoClientRepository extends BaseClientRepository {
     }
 
     /**
-     * Find a client by ID
-     * @param {string} clientId - The ID of the client
-     * @returns {Promise<Object|null>} - The client object or null if not found
+     * findById: MongoDB _id se client dhundhna.
+     * Reusability: analyticsController.resolveFinalClientId aur
+     *              clientService.createClientUser, createApiKey me use hota hai.
      */
     async findById(clientId) {
         try {
@@ -52,9 +60,8 @@ class MongoClientRepository extends BaseClientRepository {
     };
 
     /**
-     * Find a client by slug
-     * @param {string} slug - The slug of the client
-     * @returns {Promise<Object|null>} - The client object or null if not found
+     * findBySlug: Unique slug se client dhundhna.
+     * Reusability: clientService.createClient me duplicate slug check ke liye.
      */
     async findBySlug(slug) {
         try {
@@ -67,10 +74,9 @@ class MongoClientRepository extends BaseClientRepository {
     }
 
     /**
-     * Find clients with filters and pagination
-     * @param {Object} filters - Query filters
-     * @param {Object} options - Query options (limit, skip, sort)
-     * @returns {Promise<Object>}
+     * find: Filters ke saath clients ki list nikalna (paginated).
+     * options: { limit, skip, sort }
+     * Default: limit=50, sort by createdAt desc
      */
     async find(filters = {}, options = {}) {
         try {
@@ -80,7 +86,7 @@ class MongoClientRepository extends BaseClientRepository {
                 .sort(sort)
                 .skip(skip)
                 .limit(limit)
-                .select('-__v');
+                .select('-__v'); // __v (version key) hata do
 
             return clients;
         } catch (error) {
@@ -90,9 +96,8 @@ class MongoClientRepository extends BaseClientRepository {
     }
 
     /**
-     * Count clients matching filters
-     * @param {Object} filters - Query filters
-     * @returns {Promise<number>}
+     * count: Filters ke matching clients ki count karna.
+     * Reusability: Admin dashboards me total client count ke liye.
      */
     async count(filters = {}) {
         try {
@@ -106,4 +111,5 @@ class MongoClientRepository extends BaseClientRepository {
 }
 
 
+// Singleton export - puri app me ek hi instance
 export default new MongoClientRepository()

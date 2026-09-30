@@ -1,12 +1,71 @@
 .container {
+    --shell-bg: #101715;
+    --shell-panel: #141c19;
+    --shell-ink: #f3f4ed;
+    --shell-muted: #a3ada7;
+    --shell-line: rgba(233, 239, 231, 0.12);
+    --shell-accent: #c6ef68;
+    --shell-blue: #6cb9c9;
     min-height: 100vh;
+    color: var(--shell-ink);
+    background-color: var(--shell-bg);
+    background-image:
+        linear-gradient(var(--shell-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--shell-line) 1px, transparent 1px);
+    background-size: 76px 76px;
 
     &.themePurple {
-        background: linear-gradient(to bottom right, #020617, #581c87, #020617);
+        --shell-bg: #101715;
+        --shell-panel: #141c19;
+        --shell-ink: #f3f4ed;
+        --shell-muted: #a3ada7;
+        --shell-line: rgba(233, 239, 231, 0.12);
+        --shell-accent: #c6ef68;
+        --shell-blue: #6cb9c9;
+        --background: 160 16% 8%;
+        --foreground: 80 19% 94%;
+        --card: 155 14% 12%;
+        --card-foreground: 80 19% 94%;
+        --popover: 155 14% 12%;
+        --popover-foreground: 80 19% 94%;
+        --primary: 78 80% 67%;
+        --primary-foreground: 90 35% 10%;
+        --secondary: 158 13% 18%;
+        --secondary-foreground: 80 19% 94%;
+        --muted: 158 13% 18%;
+        --muted-foreground: 145 9% 65%;
+        --accent: 158 13% 20%;
+        --accent-foreground: 80 19% 94%;
+        --border: 150 10% 24%;
+        --input: 150 10% 24%;
+        --ring: 188 45% 61%;
     }
 
     &.themeLight {
-        background: linear-gradient(to bottom right, #f9fafb, #ffffff);
+        --shell-bg: #edf1eb;
+        --shell-panel: #f7f8f2;
+        --shell-ink: #1a2720;
+        --shell-muted: #647169;
+        --shell-line: rgba(26, 39, 32, 0.12);
+        --shell-accent: #71952e;
+        --shell-blue: #297d89;
+        --background: 90 18% 93%;
+        --foreground: 150 18% 14%;
+        --card: 80 25% 97%;
+        --card-foreground: 150 18% 14%;
+        --popover: 80 25% 97%;
+        --popover-foreground: 150 18% 14%;
+        --primary: 82 53% 38%;
+        --primary-foreground: 80 35% 97%;
+        --secondary: 100 12% 88%;
+        --secondary-foreground: 150 18% 14%;
+        --muted: 100 12% 88%;
+        --muted-foreground: 145 9% 38%;
+        --accent: 100 12% 86%;
+        --accent-foreground: 150 18% 14%;
+        --border: 140 12% 78%;
+        --input: 140 12% 78%;
+        --ring: 188 45% 38%;
     }
 }
 
@@ -23,14 +82,8 @@
     top: 0;
     z-index: 30;
     width: 100%;
-    border-bottom: 1px solid hsl(var(--border) / 0.4);
-    background: hsl(var(--background) / 0.95);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-
-    @supports (backdrop-filter: blur(8px)) {
-        background: hsl(var(--background) / 0.6);
-    }
+    border-bottom: 1px solid var(--shell-line);
+    background: var(--shell-panel);
 }
 
 .headerContent {
@@ -76,7 +129,7 @@
 
     p {
         font-size: 0.875rem;
-        color: hsl(var(--muted-foreground));
+        color: var(--shell-muted);
         display: flex;
         align-items: center;
         gap: 0.25rem;
@@ -100,18 +153,18 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.375rem 0.75rem;
-    border: 1px solid hsl(var(--border));
-    border-radius: 0.375rem;
-    background: hsl(var(--background));
-    color: hsl(var(--foreground));
+    border: 1px solid var(--shell-line);
+    border-radius: 4px;
+    background: var(--shell-panel);
+    color: var(--shell-ink);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
 
     &:hover:not(:disabled) {
-        background: hsl(var(--accent));
-        border-color: hsl(var(--accent-foreground) / 0.1);
+        background: color-mix(in srgb, var(--shell-accent) 12%, var(--shell-panel));
+        border-color: var(--shell-accent);
     }
 
     &:disabled {
@@ -121,7 +174,7 @@
 
     &:focus {
         outline: none;
-        box-shadow: 0 0 0 2px hsl(var(--ring));
+        box-shadow: 0 0 0 2px var(--shell-blue);
     }
 
     svg {
@@ -147,22 +200,22 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.375rem 0.75rem;
-    border: none;
-    border-radius: 0.375rem;
+    border: 1px solid transparent;
+    border-radius: 4px;
     background: transparent;
-    color: hsl(var(--foreground));
+    color: var(--shell-ink);
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: background-color 0.2s ease;
 
     &:hover {
-        background: hsl(var(--accent));
+        background: color-mix(in srgb, var(--shell-accent) 12%, var(--shell-panel));
     }
 
     &:focus {
         outline: none;
-        box-shadow: 0 0 0 2px hsl(var(--ring));
+        box-shadow: 0 0 0 2px var(--shell-blue);
     }
 
     svg {
@@ -202,23 +255,3 @@
     }
 }
 
-// Theme-specific adjustments
-:global(.theme-light) {
-    .header {
-        border-bottom-color: hsl(var(--border) / 0.6);
-        background: hsl(var(--background) / 0.98);
-
-        @supports (backdrop-filter: blur(8px)) {
-            background: hsl(var(--background) / 0.8);
-        }
-    }
-
-    .refreshButton {
-        border-color: hsl(var(--border));
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-        &:hover:not(:disabled) {
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-    }
-}

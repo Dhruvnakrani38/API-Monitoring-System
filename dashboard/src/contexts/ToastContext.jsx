@@ -17,6 +17,7 @@ const COLORS = {
     info: { border: 'hsl(var(--border))', icon: 'hsl(var(--primary))' },
 };
 
+// Ye ek notification ka icon, message aur dismiss action render karta hai.
 function ToastItem({ toast, onRemove }) {
     const Icon = ICONS[toast.type] ?? Info;
     const colors = COLORS[toast.type] ?? COLORS.info;
@@ -60,6 +61,7 @@ function ToastItem({ toast, onRemove }) {
     );
 }
 
+// Ye active notifications ko fixed viewport container mein stack karta hai.
 function ToastContainer({ toasts, onRemove }) {
     if (toasts.length === 0) return null;
 
@@ -83,9 +85,11 @@ function ToastContainer({ toasts, onRemove }) {
     );
 }
 
+// Ye toast state aur add/remove actions ko child components tak provide karta hai.
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
 
+    // Naya toast add karo aur uski duration ke baad automatically hatao.
     const addToast = useCallback((message, type = 'info', duration = 3500) => {
         const id = ++_idCounter;
         setToasts((prev) => [...prev, { id, message, type }]);
@@ -94,6 +98,7 @@ export function ToastProvider({ children }) {
         }, duration);
     }, []);
 
+    // Diye gaye ID wala toast turant list se remove karo.
     const removeToast = useCallback((id) => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
     }, []);
@@ -106,6 +111,7 @@ export function ToastProvider({ children }) {
     );
 }
 
+// Ye hook toast action deta hai aur provider ke bahar use ko rokta hai.
 export function useToast() {
     const ctx = useContext(ToastContext);
     if (!ctx) throw new Error('useToast must be used inside <ToastProvider>');

@@ -3,23 +3,28 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { reportError } from '../lib/errorReporter';
 
 class ErrorBoundary extends Component {
+    // Initial state mein error screen band rehti hai.
     constructor(props) {
         super(props);
         this.state = { hasError: false, error: null };
     }
 
+    // Render ke dauran error aaye to fallback state taiyar karo.
     static getDerivedStateFromError(error) {
         return { hasError: true, error };
     }
 
+    // Error aur component stack ko reporting utility tak bhejo.
     componentDidCatch(error, info) {
         reportError(error, { componentStack: info?.componentStack });
     }
 
+    // User ke retry karne par error state clear karo.
     handleReset = () => {
         this.setState({ hasError: false, error: null });
     };
 
+    // Error ho to fallback UI, warna wrapped application dikhaye.
     render() {
         if (this.state.hasError) {
             if (this.props.fallback) {

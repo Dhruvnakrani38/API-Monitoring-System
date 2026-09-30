@@ -1,5 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext';
 
+// Ye active app theme ko ApexCharts ke color aur mode options mein map karta hai.
 export function useChartTheme() {
     const { currentTheme } = useTheme();
     const isLight = currentTheme === 'light';

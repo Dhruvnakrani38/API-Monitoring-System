@@ -58,7 +58,7 @@ export const authApi = {
         return response.data;
     },
     logout: async () => {
-        const response = await api.post('/auth/logout');
+        const response = await api.get('/auth/logout');
         return response.data;
     },
     updateProfile: async (profileData) => {

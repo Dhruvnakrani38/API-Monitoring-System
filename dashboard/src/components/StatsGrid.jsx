@@ -2,9 +2,11 @@ import { Card, CardContent } from './ui';
 import { TrendingUp, Clock, AlertTriangle, CheckCircle2, Layers, Zap } from 'lucide-react';
 import styles from '../styles/modules/StatsGrid.module.scss';
 
+// Ye component summary metrics ko icon aur progress styling wale cards mein badalta hai.
 function StatsGrid({ stats }) {
     const successRate = 100 - stats.errorRate;
 
+    // Har metric ke liye display value, icon aur color classes taiyar karo.
     const statCards = [
         {
             title: 'Total Hits',
@@ -70,6 +72,7 @@ function StatsGrid({ stats }) {
 
     return (
         <div className={styles.container}>
+            {/* Configured metrics ko individual cards mein render karo. */}
             {statCards.map((stat) => {
                 const Icon = stat.icon;
                 return (

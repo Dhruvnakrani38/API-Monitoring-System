@@ -1,3 +1,12 @@
+// =====================================================================
+// auth/Dependencies/dependencies.js
+// Kaam: Auth module ka Dependency Injection (DI) container.
+// Yahan repositories, services, aur controllers initialize hote hain.
+// Note: clientService bhi yahan inject hoti hai kyunki approveUser me
+//       client + API key banana hota hai.
+// Reusability: authRouter.js aur analytics/dependencies.js yahan se import karte hain.
+// =====================================================================
+
 import { AuthController } from "../controller/authController.js";
 import { AuthService } from "../service/authService.js";
 import MongoUserRepository from "../repository/UserRepository.js"
@@ -6,33 +15,37 @@ import MongoClientRepository from "../../client/repository/ClientRepository.js"
 import MongoApiKeyRepository from "../../client/repository/ApiKeyRepository.js"
 
 /**
- * Dependency Injection Container for the Auth module.
- * This container initializes and manages the dependencies for the Auth module,
- * including repositories, services, and controllers.
+ * Container: Auth module ki saari dependencies ek jagah initialize karta hai.
+ * init() static method singleton pattern follow karta hai.
+ * Exported object ko directly authRouter.js use karta hai.
  */
 class Container {
     static init() {
-        // Initialize repositories
+        // ---- Repositories (Database Layer) ----
         const repositories = {
-            userRepository: MongoUserRepository
+            userRepository: MongoUserRepository   // User CRUD ke liye MongoDB repository
         };
 
-        // Initialize client service dependencies
+        // ---- Client Service Dependencies ----
+        // approveUser me naya client aur API key banana padta hai
+        // isliye clientService bhi yahan initialize kar rahe hain
         const clientRepositories = {
-            clientRepository: MongoClientRepository,
-            apiKeyRepository: MongoApiKeyRepository,
-            userRepository: MongoUserRepository // Use the same user repository
+            clientRepository: MongoClientRepository,   // Client CRUD
+            apiKeyRepository: MongoApiKeyRepository,   // API Key CRUD
+            userRepository: MongoUserRepository        // Same user repository (shared)
         };
 
+        // ClientService: approve flow me clientRepository + apiKeyRepository use karta hai
         const clientService = new ClientService(clientRepositories);
 
-        // Initialize services with their respective repositories
+        // ---- Services (Business Logic Layer) ----
         const services = {
-            authService: new AuthService(repositories.userRepository),
-            clientService: clientService
+            authService: new AuthService(repositories.userRepository),  // Auth logic
+            clientService: clientService                                 // Client/key creation
         };
 
-        // Initialize controllers with their respective services
+        // ---- Controllers (HTTP Layer) ----
+        // authController ko authService aur clientService dono chahiye
         const controller = {
             authController: new AuthController(services.authService, services.clientService)
         }
@@ -43,6 +56,7 @@ class Container {
     }
 }
 
+// Ek baar initialize karo - singleton pattern
 const initialized = Container.init();
 export { Container };
 export default initialized

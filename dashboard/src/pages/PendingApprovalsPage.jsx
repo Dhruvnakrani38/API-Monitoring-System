@@ -2,18 +2,20 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '../api/api';
 import { CheckCircle2, XCircle, Clock, ShieldCheck, Key, Copy, Check } from 'lucide-react';
-import styles from '../styles/modules/Overview.module.scss';
 
+// Ye page pending registrations ko load karke approve ya reject karne deta hai.
 export function PendingApprovalsPage() {
     const queryClient = useQueryClient();
     const [approvalResult, setApprovalResult] = useState(null);
     const [copiedKey, setCopiedKey] = useState(false);
 
+    // Server se pending registrations mangao aur loading/error state sambhalo.
     const { data: pendingUsersResponse, isLoading, error } = useQuery({
         queryKey: ['pendingUsers'],
         queryFn: authApi.getPendingUsers,
     });
 
+    // Approval ke baad list refresh karo aur naya client/API key dikhaye.
     const approveMutation = useMutation({
         mutationFn: authApi.approveUser,
         onSuccess: (response) => {
@@ -24,6 +26,7 @@ export function PendingApprovalsPage() {
         },
     });
 
+    // Rejection ke baad pending-users query ko dobara fetch karwao.
     const rejectMutation = useMutation({
         mutationFn: authApi.rejectUser,
         onSuccess: () => {
@@ -33,6 +36,7 @@ export function PendingApprovalsPage() {
 
     const pendingUsers = pendingUsersResponse?.data || [];
 
+    // Generated API key clipboard mein copy karke temporary feedback dikhata hai.
     const handleCopyKey = (key) => {
         navigator.clipboard.writeText(key);
         setCopiedKey(true);
@@ -137,6 +141,7 @@ export function PendingApprovalsPage() {
                 </div>
             ) : (
                 <div style={{ display: 'grid', gap: '1rem' }}>
+                    {/* Har pending account ke liye review aur action row banao. */}
                     {pendingUsers.map((user) => (
                         <div
                             key={user._id || user.id}

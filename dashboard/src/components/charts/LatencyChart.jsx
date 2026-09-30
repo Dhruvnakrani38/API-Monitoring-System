@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { useChartTheme } from '../../hooks/useChartTheme';
 import styles from '../../styles/modules/charts/Charts.module.scss';
 
+// Ye component average aur P95 latency ko time ke saath line chart mein dikhata hai.
 export function LatencyChart({ data }) {
     const chart = useChartTheme();
 
+    // Theme, axes aur tooltips ke options response-time data ke liye set karo.
     const options = useMemo(() => ({
         chart: {
             type: 'line',
@@ -24,12 +26,14 @@ export function LatencyChart({ data }) {
         yaxis: {
             labels: {
                 style: { colors: chart.labelColor },
+                // Axis labels ko rounded milliseconds mein dikhaye.
                 formatter: (v) => `${v.toFixed(0)}ms`,
             },
         },
         colors: ['#f59e0b', '#10b981'],
         tooltip: {
             theme: chart.tooltipTheme,
+            // Tooltip mein latency ki precise value dikhaye.
             y: { formatter: (v) => `${v.toFixed(2)}ms` },
         },
         legend: { labels: { colors: chart.labelColor } },
@@ -42,6 +46,7 @@ export function LatencyChart({ data }) {
         },
     }), [data?.categories, chart.mode, chart.labelColor, chart.gridColor, chart.tooltipTheme, chart.strokeColor]);
 
+    // Dono latency measurements ko alag chart lines mein badlo.
     const series = useMemo(() => [
         { name: 'Avg Latency', data: data?.avgLatency ?? [] },
         { name: 'P95 Latency', data: data?.p95Latency ?? [] },

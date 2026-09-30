@@ -1,25 +1,36 @@
+// =====================================================================
+// UserRepository.js
+// Kaam: MongoDB me User collection ke saare database operations yahan hote hain.
+// BaseRepository extend karta hai aur Mongoose se actual DB calls karta hai.
+// Reusability: authService, clientService, aur auth dependencies me use hota hai.
+// =====================================================================
+
 import BaseRepository from "./BaseRepository.js";
 import User from "../../../shared/models/User.js"
 import logger from "../../../shared/config/logger.js"
 
 /**
- * MongoDB implementation of the UserRepository.
- * This class provides methods to interact with the User collection in MongoDB.
+ * MongoUserRepository: User collection ke liye MongoDB implementation.
+ * create, findById, findByUsername, findByEmail, findAll ke saath
+ * extra methods: findByApprovalStatus, update, updateSafe.
  */
 class MongoUserRepository extends BaseRepository {
+    // Constructor: User model inject karta hai BaseRepository me
     constructor() {
         super(User)
     }
 
 
     /**
-     * Creates a new user in the database.
-     * @param {Object} userData - The data of the user to be created.
-     * @returns {Promise<Object>} - Returns the created user object.
+     * create: Naya user MongoDB me save karta hai.
+     * Agar role 'super_admin' hai to automatically saari permissions set hoti hain.
+     * Reusability: authService.register, clientService.createClientUser, aur
+     *              authService.publicSignup me use hota hai.
      */
     async create(userData) {
         try {
             let data = { ...userData }
+            // Super admin ke liye automatically saari permissions enable karo
             if (data.role === "super_admin" && !data.permissions) {
                 data.permissions = {
                     canCreateApiKeys: true,
@@ -29,6 +40,7 @@ class MongoUserRepository extends BaseRepository {
                 }
             }
 
+            // Mongoose model instance banao aur save karo
             const user = new this.model(data);
             await user.save();
 
@@ -41,9 +53,8 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Finds a user by their ID.
-     * @param {string} userId - The ID of the user.
-     * @returns {Promise<Object>} - Returns the user object if found.
+     * findById: User ko MongoDB _id se dhundhta hai.
+     * Reusability: authService.getProfile, approveUser, rejectUser me use hota hai.
      */
     async findById(userId) {
         try {
@@ -56,9 +67,8 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Finds a user by their username.
-     * @param {string} username - The username of the user.
-     * @returns {Promise<Object>} - Returns the user object if found.
+     * findByUsername: Login ke time username se user dhundhta hai.
+     * Reusability: authService.login me use hota hai.
      */
     async findByUsername(username) {
         try {
@@ -71,9 +81,8 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Finds a user by their email.
-     * @param {string} email - The email of the user.
-     * @returns {Promise<Object>} - Returns the user object if found.
+     * findByEmail: Email se user dhundhna (duplicate check ke liye bhi).
+     * Reusability: authService me signup ke waqt duplicate email check me.
      */
     async findByEmail(email) {
         try {
@@ -86,11 +95,13 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Finds all active users.
-     * @returns {Promise<Array>} - Returns an array of active user objects.
+     * findAll: Saare active users dhundho (password exclude karke).
+     * Reusability: Admin user management pages ke liye.
      */
     async findAll() {
         try {
+            // isActive: true filter - inactive users nahi chahiye
+            // .select("-password") - password field return mat karo (security)
             const user = await this.model.find({ isActive: true }).select("-password")
             return user
         } catch (error) {
@@ -100,9 +111,9 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Finds users by approval status.
-     * @param {string} status - The approval status to filter by.
-     * @returns {Promise<Array>} - Returns an array of user objects with the specified status.
+     * findByApprovalStatus: Approval status ke hisaab se users dhundhna.
+     * status: 'pending' | 'approved' | 'rejected'
+     * Reusability: authService.getPendingUsers me use hota hai.
      */
     async findByApprovalStatus(status) {
         try {
@@ -115,13 +126,12 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Updates a user by their ID.
-     * @param {string} userId - The ID of the user to update.
-     * @param {Object} updateData - The data to update.
-     * @returns {Promise<Object>} - Returns the updated user object.
+     * update: User ko ID se update karta hai (password bhi return ho sakta hai).
+     * Warning: Yeh password bhi return karta hai - sensitive data ke liye updateSafe use karo.
      */
     async update(userId, updateData) {
         try {
+            // { new: true } = updated document return karo, purana nahi
             const user = await this.model.findByIdAndUpdate(userId, updateData, { new: true })
             return user
         } catch (error) {
@@ -131,13 +141,12 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
-     * Updates a user by their ID and returns the updated user without password.
-     * @param {string} userId - The ID of the user to update.
-     * @param {Object} updateData - The data to update.
-     * @returns {Promise<Object>} - Returns the updated user object without password.
+     * updateSafe: User update karo lekin password field return mat karo.
+     * Reusability: approveUser aur rejectUser me use hota hai - safe response ke liye.
      */
     async updateSafe(userId, updateData) {
         try {
+            // .select("-password") = response me password field nahi aayega
             const user = await this.model.findByIdAndUpdate(userId, updateData, { new: true }).select("-password")
             return user
         } catch (error) {
@@ -147,4 +156,5 @@ class MongoUserRepository extends BaseRepository {
     }
 }
 
+// Singleton export - puri app me ek hi instance use hoga
 export default new MongoUserRepository()

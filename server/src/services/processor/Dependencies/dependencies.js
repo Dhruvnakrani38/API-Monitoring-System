@@ -7,6 +7,7 @@ import postgres from '../../../shared/config/postgres.js';
 import logger from '../../../shared/config/logger.js';
 
 class Container {
+    // Repository aur service instances bana kar processor graph return karta hai.
     static init() {
         const repositories = {
             apiHitRepository: new ApiHitRepository({ model: ApiHit, logger }),
