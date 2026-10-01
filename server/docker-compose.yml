@@ -78,6 +78,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5000
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173,https://api-monitoring-system-six.vercel.app
       # MongoDB (local container)
       MONGO_URI: mongodb://mongo:27017/api_monitoring
       MONGO_DB_NAME: api_monitoring

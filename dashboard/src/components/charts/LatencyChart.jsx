@@ -30,7 +30,7 @@ export function LatencyChart({ data }) {
                 formatter: (v) => `${v.toFixed(0)}ms`,
             },
         },
-        colors: ['#f59e0b', '#10b981'],
+        colors: ['#6cb9c9', '#c6ef68'],
         tooltip: {
             theme: chart.tooltipTheme,
             // Tooltip mein latency ki precise value dikhaye.
@@ -39,7 +39,7 @@ export function LatencyChart({ data }) {
         legend: { labels: { colors: chart.labelColor } },
         markers: {
             size: 4,
-            colors: ['#f59e0b', '#10b981'],
+            colors: ['#6cb9c9', '#c6ef68'],
             strokeWidth: 2,
             strokeColors: chart.strokeColor,
             hover: { size: 6 },

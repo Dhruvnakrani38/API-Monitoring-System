@@ -49,7 +49,7 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
                         <Activity />
                     </div>
                     <h1 className={styles.title}>
-                        API Monitor
+                        PlusWatch
                     </h1>
                     <p className={styles.description}>
                         Sign in to access your dashboard

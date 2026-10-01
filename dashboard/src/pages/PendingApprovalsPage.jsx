@@ -53,7 +53,7 @@ export function PendingApprovalsPage() {
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <ShieldCheck style={{ width: 32, height: 32, color: 'var(--accent-color, #6366f1)' }} />
+                <ShieldCheck style={{ width: 32, height: 32, color: 'var(--accent-color, #c6ef68)' }} />
                 <div>
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 700, margin: 0, color: 'var(--text-primary, #f8fafc)' }}>
                         User Approvals
@@ -109,7 +109,7 @@ export function PendingApprovalsPage() {
                             <button
                                 onClick={() => handleCopyKey(approvalResult.apiKey.keyValue || approvalResult.apiKey)}
                                 style={{
-                                    background: 'var(--accent-color, #6366f1)',
+                                    background: 'var(--accent-color, #c6ef68)',
                                     color: '#fff',
                                     border: 'none',
                                     borderRadius: '0.375rem',

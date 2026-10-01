@@ -38,7 +38,7 @@ export function EndpointPerformanceChart({ data }) {
         yaxis: {
             labels: { style: { colors: chart.labelColor } },
         },
-        colors: ['#8b5cf6'],
+        colors: ['#c6ef68'],
         tooltip: { theme: chart.tooltipTheme },
     }), [data?.endpoints, chart.mode, chart.labelColor, chart.gridColor, chart.tooltipTheme]);
 

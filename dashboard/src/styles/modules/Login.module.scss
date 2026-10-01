@@ -459,14 +459,17 @@
 }
 
 .logoContainer {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 34px;
+    height: 34px;
     border: 1px solid rgba(198, 239, 104, 0.55);
-    border-radius: 5px;
+    border-radius: 0;
     background: rgba(198, 239, 104, 0.1);
     box-shadow: none;
+    margin: 0 auto;
 
     svg {
+        width: 18px;
+        height: 18px;
         color: #c6ef68;
     }
 }

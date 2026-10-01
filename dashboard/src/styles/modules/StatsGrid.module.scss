@@ -97,112 +97,112 @@
 
 // Gradient color definitions for value text
 .gradientBlue {
-    --tw-gradient-from: #3b82f6;
-    --tw-gradient-to: #06b6d4;
+    --tw-gradient-from: #6cb9c9;
+    --tw-gradient-to: #9bd9df;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .gradientPurple {
-    --tw-gradient-from: #a855f7;
-    --tw-gradient-to: #ec4899;
+    --tw-gradient-from: #c6ef68;
+    --tw-gradient-to: #e1f7a8;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .gradientRed {
-    --tw-gradient-from: #ef4444;
-    --tw-gradient-to: #f97316;
+    --tw-gradient-from: #f07c6c;
+    --tw-gradient-to: #e6a06c;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .gradientGreen {
-    --tw-gradient-from: #22c55e;
-    --tw-gradient-to: #10b981;
+    --tw-gradient-from: #9bdc65;
+    --tw-gradient-to: #c6ef68;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .gradientIndigo {
-    --tw-gradient-from: #6366f1;
-    --tw-gradient-to: #3b82f6;
+    --tw-gradient-from: #6cb9c9;
+    --tw-gradient-to: #c6ef68;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 .gradientYellow {
-    --tw-gradient-from: #eab308;
-    --tw-gradient-to: #f97316;
+    --tw-gradient-from: #d5f58d;
+    --tw-gradient-to: #c6ef68;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
 }
 
 // Background colors for icon containers
 .bgBlue {
-    background-color: rgba(59, 130, 246, 0.1);
+    background-color: rgba(108, 185, 201, 0.12);
 }
 
 .bgPurple {
-    background-color: rgba(168, 85, 247, 0.1);
+    background-color: rgba(198, 239, 104, 0.12);
 }
 
 .bgRed {
-    background-color: rgba(239, 68, 68, 0.1);
+    background-color: rgba(240, 124, 108, 0.12);
 }
 
 .bgGreen {
-    background-color: rgba(34, 197, 94, 0.1);
+    background-color: rgba(155, 220, 101, 0.12);
 }
 
 .bgIndigo {
-    background-color: rgba(99, 102, 241, 0.1);
+    background-color: rgba(108, 185, 201, 0.12);
 }
 
 .bgYellow {
-    background-color: rgba(234, 179, 8, 0.1);
+    background-color: rgba(213, 245, 141, 0.12);
 }
 
 // Text colors for icons
 .textBlue {
-    color: rgb(59, 130, 246);
+    color: #6cb9c9;
 }
 
 .textPurple {
-    color: hsl(var(--primary));
+    color: #c6ef68;
 }
 
 .textRed {
-    color: rgb(239, 68, 68);
+    color: #f07c6c;
 }
 
 .textGreen {
-    color: rgb(34, 197, 94);
+    color: #9bdc65;
 }
 
 .textIndigo {
-    color: rgb(99, 102, 241);
+    color: #6cb9c9;
 }
 
 .textYellow {
-    color: rgb(234, 179, 8);
+    color: #d5f58d;
 }
 
 // Progress bar backgrounds
 .progressBlue {
-    background: linear-gradient(to right, #3b82f6, #06b6d4);
+    background: linear-gradient(to right, #6cb9c9, #9bd9df);
 }
 
 .progressPurple {
-    background: linear-gradient(to right, #a855f7, #ec4899);
+    background: linear-gradient(to right, #c6ef68, #e1f7a8);
 }
 
 .progressRed {
-    background: linear-gradient(to right, #ef4444, #f97316);
+    background: linear-gradient(to right, #f07c6c, #e6a06c);
 }
 
 .progressGreen {
-    background: linear-gradient(to right, #22c55e, #10b981);
+    background: linear-gradient(to right, #9bdc65, #c6ef68);
 }
 
 .progressIndigo {
-    background: linear-gradient(to right, #6366f1, #3b82f6);
+    background: linear-gradient(to right, #6cb9c9, #c6ef68);
 }
 
 .progressYellow {
-    background: linear-gradient(to right, #eab308, #f97316);
+    background: linear-gradient(to right, #d5f58d, #c6ef68);
 }

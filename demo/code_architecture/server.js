@@ -13,7 +13,8 @@ app.use(express.json());
 // Apply monitoring middleware early in the stack
 app.use(monitoringMiddleware({
     serviceName: process.env.PULSEWATCH_SERVICE_NAME || 'demo-api',
-    enableLogging: process.env.MONITORING_LOGGING === 'true'
+    enableLogging: process.env.MONITORING_LOGGING === 'true',
+    ignore: ['/api/health', '/api/hit']
 }));
 
 const demoEndpoints = Array.from({ length: 10 }, (_, index) => `/api/demo/endpoint-${index + 1}`);

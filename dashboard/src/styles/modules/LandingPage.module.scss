@@ -55,6 +55,26 @@
     text-decoration: none;
 }
 
+.brandCopy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    strong {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    small {
+        color: var(--landing-muted);
+        font-size: 0.58rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        line-height: 1;
+        text-transform: uppercase;
+    }
+}
+
 .brandMark {
     width: 34px;
     height: 34px;

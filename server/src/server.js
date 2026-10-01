@@ -30,7 +30,7 @@ const app = express();
  */
 app.use(helmet()); // HTTP Security Headers add karta hai (XSS, Clickjacking se protection)
 app.use(cors({
-    origin: true, // Cross-Origin Requests allow karta hai (Vercel Frontend & Localhost support)
+    origin: (origin, callback) => callback(null, !origin || config.corsOrigins.includes(origin)),
     credentials: true // Cookies aur auth headers accept karne ke liye
 }));
 app.use(cookieParser()); // Auth tokens/cookies parse karta hai

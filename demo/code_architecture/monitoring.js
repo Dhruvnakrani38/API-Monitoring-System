@@ -23,14 +23,15 @@ statsReporter.unref();
 const monitoringMiddleware = (options = {}) => {
     const {
         apiKey = process.env.PULSEWATCH_API_KEY || process.env.MONITORING_API_KEY,
-        endpoint = process.env.PULSEWATCH_URL
-            ? `${process.env.PULSEWATCH_URL.replace(/\/$/, '')}/api/hit`
-            : process.env.MONITORING_ENDPOINT || 'http://localhost:5000/api/hit',
-        serviceName = process.env.SERVICE_NAME || 'my-service',
+        url = process.env.PULSEWATCH_URL || 'http://localhost:5000',
+        endpoint: configuredEndpoint = process.env.MONITORING_ENDPOINT,
+        serviceName = process.env.PULSEWATCH_SERVICE_NAME || process.env.SERVICE_NAME || 'my-service',
         enableLogging = process.env.MONITORING_LOGGING === 'true',
         timeout = Number(process.env.PULSEWATCH_TIMEOUT_MS || 15000),
-        enabled = process.env.MONITORING_ENABLED !== 'false'
+        enabled = process.env.MONITORING_ENABLED !== 'false',
+        ignore = []
     } = options;
+    const endpoint = configuredEndpoint || `${url.replace(/\/+$/, '')}/api/hit`;
 
     // If monitoring is disabled or no API key, return pass-through middleware
     if (!enabled || !apiKey) {
@@ -41,6 +42,8 @@ const monitoringMiddleware = (options = {}) => {
     }
 
     return (req, res, next) => {
+        if (ignore.includes(req.path)) return next();
+
         const startTime = Date.now();
 
         // Capture the original response end function
@@ -53,7 +56,7 @@ const monitoringMiddleware = (options = {}) => {
             // Prepare monitoring data
             const monitoringData = {
                 serviceName: serviceName,
-                endpoint: req.originalUrl || req.url,
+                endpoint: req.path,
                 method: req.method,
                 statusCode: res.statusCode,
                 latencyMs: responseTime,

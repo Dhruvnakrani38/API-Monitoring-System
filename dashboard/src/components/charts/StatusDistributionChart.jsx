@@ -13,7 +13,7 @@ export function StatusDistributionChart({ data }) {
         chart: { type: 'donut', background: 'transparent' },
         theme: { mode: chart.mode },
         labels: data?.labels ?? ['Success', 'Client Error', 'Server Error'],
-        colors: ['#10b981', '#f59e0b', '#ef4444'],
+        colors: ['#c6ef68', '#6cb9c9', '#f07c6c'],
         dataLabels: {
             enabled: true,
             style: { fontSize: '14px', fontWeight: 'bold' },

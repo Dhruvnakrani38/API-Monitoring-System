@@ -1,4 +1,4 @@
-# API Monitoring Dashboard
+# PlusWatch Dashboard by DN Systems
 
 A modern React dashboard for visualizing API monitoring metrics in real-time.
 

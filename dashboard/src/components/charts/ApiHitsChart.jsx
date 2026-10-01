@@ -30,7 +30,7 @@ export function ApiHitsChart({ stats }) {
         yaxis: {
             labels: { style: { colors: chart.labelColor } },
         },
-        colors: ['#8b5cf6', '#22c55e', '#ef4444'],
+        colors: ['#6cb9c9', '#c6ef68', '#f07c6c'],
         legend: { show: false },
         tooltip: { theme: chart.tooltipTheme },
     }), [chart.mode, chart.labelColor, chart.gridColor, chart.tooltipTheme]);

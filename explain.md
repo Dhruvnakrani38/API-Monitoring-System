@@ -1,8 +1,8 @@
-# PulseWatch API Monitoring System
+# PlusWatch API Monitoring System by DN Systems
 
 ## 1. Project Flow and Architecture
 
-The PulseWatch project is a full-stack, real-time API monitoring solution designed to capture, process, and visualize API metrics. 
+The PlusWatch project by DN Systems is a full-stack, real-time API monitoring solution designed to capture, process, and visualize API metrics.
 
 ### Core Components
 1. **Client API (Demo Blog)**: The application being monitored. It uses a lightweight `monitoring.js` middleware.

@@ -1,11 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import {
+    Activity,
     LayoutDashboard,
     Settings,
     ShieldCheck,
     UsersRound,
-    Zap,
 } from 'lucide-react';
 import styles from '../../styles/modules/layout/Sidebar.module.scss';
 
@@ -61,12 +61,12 @@ export function Sidebar({ isOpen, onClose, currentUser }) {
             >
                 <div className={styles.sidebarContainer}>
                     <div className={styles.logoSection}>
-                        <div className={cn(styles.logoIcon, 'theme-logo-bg')}>
-                            <Zap aria-hidden="true" />
+                        <div className={styles.logoIcon}>
+                            <Activity aria-hidden="true" />
                         </div>
                         <div className={styles.logoText}>
-                            <h2 className="theme-text-gradient">API Monitor</h2>
-                            <p>By Code Architecture</p>
+                            <h2>PlusWatch</h2>
+                            <p>by DN Systems</p>
                         </div>
                     </div>
                     <nav className={styles.navigation} aria-label="Main navigation">

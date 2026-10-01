@@ -14,6 +14,10 @@ const config = {
     // Kaam: Development vs Production mode aur HTTP port identify karta hai
     node_env: process.env.NODE_ENV || 'development',
     port: parseInt(process.env.PORT || "5000", 10),
+    corsOrigins: (process.env.CORS_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,https://api-monitoring-system-six.vercel.app')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
 
     // 🍃 MongoDB Database Settings (Raw API Hit Logs Store karne ke liye)
     // Usage: Mongoose connector (mongodb.js) dwara use hota hai. Atlas cloud URL (`mongodb+srv://`) bhi support karta hai.
@@ -63,6 +67,7 @@ const config = {
     cookie: {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: process.env.COOKIE_SAME_SITE || (process.env.NODE_ENV === "production" ? "none" : "lax"),
         expiresIn: 24 * 60 * 60 * 1000 // 1 Day TTL
     }
 };

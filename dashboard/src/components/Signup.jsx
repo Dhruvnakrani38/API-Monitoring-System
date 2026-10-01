@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '../api/api';
-import { UserPlus, Mail, Lock, User, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Activity, Mail, Lock, User, Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
 import styles from '../styles/modules/Login.module.scss';
 
 function Signup({ onSignupSuccess, onToggleLogin, onBack }) {
@@ -91,10 +91,10 @@ function Signup({ onSignupSuccess, onToggleLogin, onBack }) {
                 </button>
                 <div className={styles.cardHeader}>
                     <div className={styles.logoContainer}>
-                        <UserPlus />
+                        <Activity aria-hidden="true" />
                     </div>
                     <h1 className={styles.title}>
-                        API Monitor
+                        PlusWatch
                     </h1>
                     <p className={styles.description}>
                         Sign up for API monitoring services

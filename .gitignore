@@ -1,0 +1,7 @@
+/logs/
+/server/logs/
+cookies.txt
+server/cookies.txt
+.env
+.env.local
+*.log
