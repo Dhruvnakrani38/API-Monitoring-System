@@ -120,6 +120,29 @@ export const analyticsApi = {
     },
 };
 
+export const alertsApi = {
+    getRules: async (clientId) => {
+        const response = await api.get('/alerts/rules', { params: clientId ? { clientId } : undefined });
+        return response.data;
+    },
+    createRule: async (rule) => {
+        const response = await api.post('/alerts/rules', rule);
+        return response.data;
+    },
+    updateRule: async (id, changes) => {
+        const response = await api.patch(`/alerts/rules/${id}`, changes);
+        return response.data;
+    },
+    deleteRule: async (id, clientId) => {
+        const response = await api.delete(`/alerts/rules/${id}`, { params: clientId ? { clientId } : undefined });
+        return response.data;
+    },
+    getIncidents: async (clientId) => {
+        const response = await api.get('/alerts/incidents', { params: clientId ? { clientId } : undefined });
+        return response.data;
+    },
+};
+
 export const clientApi = {
     getCurrentClient: async () => {
         const response = await api.get('/clients/current');

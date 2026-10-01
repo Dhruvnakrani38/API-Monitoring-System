@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import {
     Activity,
+    BellRing,
     LayoutDashboard,
     Settings,
     ShieldCheck,
@@ -21,6 +22,12 @@ const navItems = [
         href: '/approvals',
         icon: ShieldCheck,
         description: 'Approve client registrations'
+    },
+    {
+        title: 'Alerts',
+        href: '/alerts',
+        icon: BellRing,
+        description: 'Alert rules and incidents',
     },
 ];
 

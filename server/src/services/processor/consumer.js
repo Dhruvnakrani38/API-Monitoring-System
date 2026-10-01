@@ -8,6 +8,7 @@ import processorContainer from './Dependencies/dependencies.js';
 import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
 import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
 import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
+import alertsContainer from '../alerts/Dependencies/dependencies.js';
 
 /**
  * 📦 Zod Schema Validation for Incoming Queue Messages
@@ -26,7 +27,7 @@ const messageSchema = z.object({
  * Usage: Background process `npm run processor` dwara execute hota hai. Server main process ko load-free rakhta hai.
  */
 class EventConsumer {
-    constructor({ processorService, rabbitmq, mongodb, postgres, config, logger, retryStrategy, circuitBreaker }) {
+    constructor({ processorService, rabbitmq, mongodb, postgres, config, logger, retryStrategy, circuitBreaker, alertEvaluator }) {
         this._processorService = processorService;
         this._rabbitmq = rabbitmq;
         this._mongodb = mongodb;
@@ -35,6 +36,8 @@ class EventConsumer {
         this._logger = logger;
         this._retryStrategy = retryStrategy;
         this._circuitBreaker = circuitBreaker;
+        this._alertEvaluator = alertEvaluator;
+        this._alertTimer = null;
 
         this.isRunning = false;
         this.channel = null;
@@ -66,6 +69,12 @@ class EventConsumer {
 
             this._logger.info(`Started consuming from queue: ${this._config.rabbitmq.queue}`);
             this.isRunning = true;
+            await alertsContainer.repositories.alertRepository.ensureSchema();
+            await this._alertEvaluator.evaluateAll();
+            this._alertTimer = setInterval(
+                () => this._alertEvaluator.evaluateAll().catch((error) => this._logger.error('Alert evaluation failed:', error)),
+                30_000
+            );
 
             // RabbitMQ queue subscriber handler
             await this.channel.consume(
@@ -87,6 +96,10 @@ class EventConsumer {
     async _cleanup() {
         try {
             this.isRunning = false;
+            if (this._alertTimer) {
+                clearInterval(this._alertTimer);
+                this._alertTimer = null;
+            }
             if (this.channel) {
                 await this.channel.close();
                 this.channel = null
@@ -337,6 +350,7 @@ const consumer = new EventConsumer({
     logger,
     retryStrategy,
     circuitBreaker,
+    alertEvaluator: alertsContainer.services.alertEvaluator,
 });
 
 async function startConsumerWithRetry() {

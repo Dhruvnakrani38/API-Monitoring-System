@@ -237,6 +237,19 @@ export class MetricsRepository extends BaseRepository {
         }
     }
 
+    async getAlertWindowMetric(rule) {
+        const values = [rule.client_id, new Date(Date.now() - Number(rule.window_minutes) * 60_000)];
+        const conditions = ['client_id = $1', 'time_bucket >= $2'];
+        if (rule.service_name) { values.push(rule.service_name); conditions.push(`service_name = $${values.length}`); }
+        if (rule.endpoint) { values.push(rule.endpoint); conditions.push(`endpoint = $${values.length}`); }
+        const result = await this._query(`
+            SELECT COALESCE(SUM(total_hits), 0) AS total_hits,
+                   COALESCE(SUM(error_hits), 0) AS error_hits,
+                   COALESCE(SUM(avg_latency * total_hits) / NULLIF(SUM(total_hits), 0), 0) AS avg_latency
+            FROM endpoint_metrics WHERE ${conditions.join(' AND ')}`, values);
+        return result.rows[0] || { total_hits: 0, error_hits: 0, avg_latency: 0 };
+    }
+
     _query(sql, params = [], client = this.postgres) {
         const target = client || this.postgres;
 

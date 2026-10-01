@@ -1,0 +1,24 @@
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.form { display: flex; flex-direction: column; gap: 0.85rem; }
+.form label { display: flex; flex-direction: column; gap: 0.35rem; color: hsl(var(--muted-foreground)); font-size: 0.78rem; font-weight: 600; }
+.form input, .form select { width: 100%; border: 1px solid hsl(var(--input)); border-radius: 4px; background: hsl(var(--background)); color: hsl(var(--foreground)); padding: 0.6rem 0.7rem; font: inherit; }
+.formRow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.form button { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; border: 0; border-radius: 4px; padding: 0.65rem 0.8rem; background: var(--shell-accent, hsl(var(--primary))); color: #17200f; font-weight: 700; cursor: pointer; }
+.form button:disabled { cursor: not-allowed; opacity: 0.55; }
+.error { color: #f07c6c; font-size: 0.8rem; }
+.ruleList, .incidentList { display: flex; flex-direction: column; gap: 0.65rem; }
+.ruleRow, .incidentRow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid hsl(var(--border) / 0.6); padding: 0.75rem 0; }
+.ruleRow:last-child, .incidentRow:last-child { border-bottom: 0; }
+.ruleRow > div:first-child, .incidentRow > div { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.ruleRow span, .incidentRow span, .incidentRow time { color: hsl(var(--muted-foreground)); font-size: 0.75rem; }
+.ruleActions { display: flex; align-items: center; gap: 0.4rem; }
+.ruleActions button { border: 1px solid hsl(var(--border)); border-radius: 4px; background: transparent; color: hsl(var(--foreground)); padding: 0.4rem 0.55rem; cursor: pointer; font-size: 0.72rem; }
+.iconButton { display: inline-flex; align-items: center; justify-content: center; color: #f07c6c !important; }
+.status { display: inline-flex; min-width: 5.5rem; justify-content: center; border-radius: 3px; padding: 0.25rem 0.4rem; font-size: 0.68rem !important; font-weight: 700; text-transform: uppercase; }
+.open { background: rgba(240,124,108,0.14); color: #f07c6c !important; }
+.acknowledged { background: rgba(108,185,201,0.14); color: #6cb9c9 !important; }
+.resolved { background: rgba(198,239,104,0.14); color: #c6ef68 !important; }
+.empty { color: hsl(var(--muted-foreground)); font-size: 0.85rem; }
+
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .formRow { grid-template-columns: 1fr; } .incidentRow { align-items: flex-start; flex-direction: column; } }
