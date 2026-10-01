@@ -73,7 +73,7 @@ function TopEndpoints({ endpoints, onSelectEndpoint, canOpenDetails = true }) {
                 <div className={styles.endpointsList}>
                     {endpoints.map((endpoint, index) => (
                         <div
-                            key={`${endpoint.endpoint}-${endpoint.method}`}
+                            key={`${endpoint.serviceName}-${endpoint.endpoint}-${endpoint.method}-${index}`}
                             className={styles.endpointItem}
                         >
                             <div className={styles.endpointContent}>
