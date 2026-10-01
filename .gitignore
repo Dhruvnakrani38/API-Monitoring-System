@@ -2,6 +2,8 @@
 /server/logs/
 cookies.txt
 server/cookies.txt
+# data.md
 .env
 .env.local
 *.log
+data.md
