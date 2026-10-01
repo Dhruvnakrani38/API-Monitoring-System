@@ -9,6 +9,7 @@ import { EVENT_TYPES } from '../../shared/events/eventContracts.js';
 import { RetryStrategy, isRetryable } from '../../shared/events/producer/RetryStrategy.js';
 import { CircuitBreaker } from '../../shared/events/producer/CircuitBreaker.js';
 import alertsContainer from '../alerts/Dependencies/dependencies.js';
+import syntheticsContainer from '../synthetics/Dependencies/dependencies.js';
 
 /**
  * 📦 Zod Schema Validation for Incoming Queue Messages
@@ -38,6 +39,7 @@ class EventConsumer {
         this._circuitBreaker = circuitBreaker;
         this._alertEvaluator = alertEvaluator;
         this._alertTimer = null;
+        this._syntheticTimer = null;
 
         this.isRunning = false;
         this.channel = null;
@@ -75,6 +77,12 @@ class EventConsumer {
                 () => this._alertEvaluator.evaluateAll().catch((error) => this._logger.error('Alert evaluation failed:', error)),
                 30_000
             );
+            await syntheticsContainer.repositories.syntheticRepository.ensureSchema();
+            await syntheticsContainer.services.syntheticService.runDue();
+            this._syntheticTimer = setInterval(
+                () => syntheticsContainer.services.syntheticService.runDue().catch((error) => this._logger.error('Synthetic check evaluation failed:', error)),
+                30_000
+            );
 
             // RabbitMQ queue subscriber handler
             await this.channel.consume(
@@ -99,6 +107,10 @@ class EventConsumer {
             if (this._alertTimer) {
                 clearInterval(this._alertTimer);
                 this._alertTimer = null;
+            }
+            if (this._syntheticTimer) {
+                clearInterval(this._syntheticTimer);
+                this._syntheticTimer = null;
             }
             if (this.channel) {
                 await this.channel.close();

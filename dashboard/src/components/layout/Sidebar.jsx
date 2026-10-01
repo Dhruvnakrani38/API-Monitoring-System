@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import {
     Activity,
     BellRing,
+    Globe2,
     LayoutDashboard,
     Settings,
     ShieldCheck,
@@ -29,6 +30,7 @@ const navItems = [
         icon: BellRing,
         description: 'Alert rules and incidents',
     },
+    { title: 'Synthetic Checks', href: '/synthetics', icon: Globe2, description: 'Scheduled API checks' },
 ];
 
 const bottomNavItems = [

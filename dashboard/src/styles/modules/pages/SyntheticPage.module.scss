@@ -1,0 +1,17 @@
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.form { display: flex; flex-direction: column; gap: 0.8rem; }
+.form label { display: flex; flex-direction: column; gap: 0.3rem; color: hsl(var(--muted-foreground)); font-size: 0.78rem; font-weight: 600; }
+.form input, .form select { border: 1px solid hsl(var(--input)); border-radius: 4px; padding: 0.6rem; background: hsl(var(--background)); color: hsl(var(--foreground)); font: inherit; }
+.row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+.form button { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; border: 0; border-radius: 4px; padding: 0.65rem; background: var(--shell-accent, hsl(var(--primary))); color: #17200f; font-weight: 700; cursor: pointer; }
+.list { display: flex; flex-direction: column; gap: 0.5rem; }
+.check, .run { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid hsl(var(--border) / 0.6); padding: 0.75rem 0; cursor: pointer; }
+.check > div { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.check span, .check small, .run { color: hsl(var(--muted-foreground)); font-size: 0.75rem; overflow-wrap: anywhere; }
+.check button { border: 0; background: transparent; color: #f07c6c; cursor: pointer; }
+.run { cursor: default; }
+.pass, .fail { font-size: 0.68rem; font-weight: 800; }
+.pass { color: #c6ef68; }.fail { color: #f07c6c; }
+.run time { flex: 1; text-align: right; font-size: 0.7rem; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .row { grid-template-columns: 1fr; } .run { align-items: flex-start; flex-direction: column; } .run time { text-align: left; } }

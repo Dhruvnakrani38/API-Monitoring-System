@@ -15,6 +15,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ defa
 const PendingApprovalsPage = lazy(() => import('./pages/PendingApprovalsPage').then(m => ({ default: m.PendingApprovalsPage })));
 const TeamPage = lazy(() => import('./pages/TeamPage').then(m => ({ default: m.TeamPage })));
 const AlertsPage = lazy(() => import('./pages/AlertsPage').then(m => ({ default: m.AlertsPage })));
+const SyntheticPage = lazy(() => import('./pages/SyntheticPage').then(m => ({ default: m.SyntheticPage })));
 
 const pageFallback = (
     <div style={{ height: '60vh', display: 'grid', placeItems: 'center' }}>Loading…</div>
@@ -118,6 +119,7 @@ function AuthGate() {
                     <Route path="/approvals" element={currentUser?.role === 'super_admin' ? <PendingApprovalsPage /> : <Navigate to="/" replace />} />
                     <Route path="/team" element={currentUser?.role === 'client_admin' ? <TeamPage currentUser={currentUser} /> : <Navigate to="/" replace />} />
                     <Route path="/alerts" element={<AlertsPage currentUser={currentUser} />} />
+                    <Route path="/synthetics" element={<SyntheticPage currentUser={currentUser} />} />
                     <Route path="/settings" element={<SettingsPage currentUser={currentUser} />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>

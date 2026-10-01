@@ -17,6 +17,8 @@ import ingestRouter from "./services/ingest/routes/ingestRoutes.js";
 import analyticsRouter from "./services/analytics/routes/analyticsRoutes.js";
 import alertRouter from './services/alerts/routes/alertRoutes.js';
 import alertsContainer from './services/alerts/Dependencies/dependencies.js';
+import syntheticRouter from './services/synthetics/routes/syntheticRoutes.js';
+import syntheticsContainer from './services/synthetics/Dependencies/dependencies.js';
 
 /**
  * 🟢 Express Application Initialization
@@ -106,6 +108,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/hit", ingestRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/alerts", alertRouter);
+app.use("/api/synthetics", syntheticRouter);
 app.use("/api", clientRouter);
 
 /**
@@ -139,6 +142,7 @@ async function initializeConnection() {
 
         // 2b. Ensure durable alert and incident tables exist before serving requests.
         await alertsContainer.repositories.alertRepository.ensureSchema();
+        await syntheticsContainer.repositories.syntheticRepository.ensureSchema();
 
         // 3. Connect to RabbitMQ Queue Broker & Assert Queues
         try {

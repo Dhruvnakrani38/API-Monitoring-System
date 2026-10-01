@@ -143,6 +143,13 @@ export const alertsApi = {
     },
 };
 
+export const syntheticsApi = {
+    getChecks: async (clientId) => (await api.get('/synthetics', { params: clientId ? { clientId } : undefined })).data,
+    createCheck: async (check) => (await api.post('/synthetics', check)).data,
+    deleteCheck: async (id, clientId) => (await api.delete(`/synthetics/${id}`, { params: clientId ? { clientId } : undefined })).data,
+    getRuns: async (id, clientId) => (await api.get(`/synthetics/${id}/runs`, { params: clientId ? { clientId } : undefined })).data,
+};
+
 export const clientApi = {
     getCurrentClient: async () => {
         const response = await api.get('/clients/current');
