@@ -25,6 +25,7 @@ class Container {
         // Repositories: database se data fetch karne ke liye
         const repositories = {
             clientRepository,                                                    // Client (MongoDB)
+            apiHitRepository: processorContainer.repositories.apiHitRepository,  // Raw API hits (MongoDB)
             metricsRepository: processorContainer.repositories.metricsRepository, // Metrics (PostgreSQL)
         };
 
