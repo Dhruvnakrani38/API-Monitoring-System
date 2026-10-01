@@ -67,3 +67,21 @@ test('upsertEndpointMetrics divides the complete weighted average numerator', as
 
   assert.match(capturedSql, /avg_latency = \(\s*\(\(endpoint_metrics\.avg_latency \* endpoint_metrics\.total_hits\)\s*\+\s*\(EXCLUDED\.avg_latency \* EXCLUDED\.total_hits\)\)\s*\/ NULLIF\(endpoint_metrics\.total_hits \+ EXCLUDED\.total_hits, 0\)/);
 });
+
+test('getTopEndpoints omits the SQL limit when all endpoints are requested', async () => {
+  let capturedSql = '';
+  const repo = new MetricsRepository({
+    logger: { error() {} },
+    postgres: {
+      query: async ({ text }) => {
+        capturedSql = text;
+        return { rows: [] };
+      },
+    },
+  });
+
+  await repo.getTopEndpoints('client-1', null, new Date('2026-01-01T00:00:00.000Z'));
+
+  assert.doesNotMatch(capturedSql, /LIMIT/);
+  assert.match(capturedSql, /ORDER BY total_hits DESC/);
+});

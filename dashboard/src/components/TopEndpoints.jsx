@@ -1,8 +1,8 @@
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui';
-import { BarChart3, TrendingUp, Clock, AlertCircle, Activity } from 'lucide-react';
+import { BarChart3, TrendingUp, Clock, AlertCircle, Activity, ArrowUpRight } from 'lucide-react';
 import styles from '../styles/modules/TopEndpoints.module.scss';
 
-function TopEndpoints({ endpoints }) {
+function TopEndpoints({ endpoints, onSelectEndpoint, canOpenDetails = true }) {
     const getMethodColor = (method) => {
         const colors = {
             GET: styles.methodGet,
@@ -30,8 +30,8 @@ function TopEndpoints({ endpoints }) {
                             <BarChart3 className={styles.icon} />
                         </div>
                         <div>
-                            <CardTitle>Top Endpoints</CardTitle>
-                            <CardDescription>Most active API endpoints</CardDescription>
+                            <CardTitle>All Endpoints</CardTitle>
+                            <CardDescription>Every endpoint with traffic and failure details</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -59,13 +59,13 @@ function TopEndpoints({ endpoints }) {
                             <BarChart3 className={styles.icon} />
                         </div>
                         <div>
-                            <CardTitle>Top Endpoints</CardTitle>
-                            <CardDescription>Most active API endpoints by hit count</CardDescription>
+                            <CardTitle>All Endpoints</CardTitle>
+                            <CardDescription>Every endpoint ordered by request count</CardDescription>
                         </div>
                     </div>
                     <Badge variant="secondary" className={styles.badge}>
                         <TrendingUp className={styles.badgeIcon} />
-                        Top {endpoints.length}
+                        All {endpoints.length}
                     </Badge>
                 </div>
             </CardHeader>
@@ -120,17 +120,28 @@ function TopEndpoints({ endpoints }) {
                                             </div>
                                         </div>
                                         <div className={styles.statItem}>
-                                            <div className={`${styles.statIcon} ${styles.statIconRed}`}>
+                                                    <div className={`${styles.statIcon} ${styles.statIconRed}`}>
                                                 <AlertCircle className={styles.statIconSvg} />
                                             </div>
                                             <div>
-                                                <p className={styles.statLabel}>Error Rate</p>
-                                                <p className={`${styles.statValue} ${styles.errorRate}`}>{endpoint.errorRate}%</p>
+                                                        <p className={styles.statLabel}>Failed</p>
+                                                        <p className={`${styles.statValue} ${styles.errorRate}`}>
+                                                            {parseInt(endpoint.errorHits).toLocaleString()} ({endpoint.errorRate}%)
+                                                        </p>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <button
+                                type="button"
+                                className={styles.detailButton}
+                                onClick={() => onSelectEndpoint?.(endpoint)}
+                                disabled={!canOpenDetails}
+                                title={canOpenDetails ? 'View endpoint details' : 'Select one client to view details'}
+                            >
+                                Details <ArrowUpRight aria-hidden="true" />
+                            </button>
                         </div>
                     ))}
                 </div>

@@ -269,3 +269,28 @@
         color: #f87171;
     }
 }
+
+.detailButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0.75rem 0 0 3rem;
+    border: 1px solid hsl(var(--border));
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem;
+    background: transparent;
+    color: hsl(var(--primary));
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 600;
+
+    svg {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
+}

@@ -163,7 +163,7 @@ export class AnalyticsController {
             // Teen parallel calls - agar ek fail ho to bhi baki ka data milega (allSettled)
             const result = await Promise.allSettled([
                 this.analyticsService.getOverallStats(finalClientId, timeRange),
-                this.analyticsService.getTopEndpoints(finalClientId, { limit: 5, startTime: timeRange.startTime }),
+                this.analyticsService.getTopEndpoints(finalClientId, { limit: null, startTime: timeRange.startTime }),
                 this.analyticsService.getTimeSeries(finalClientId, { ...timeRange, limit: 24 }),
             ]);
 
@@ -181,6 +181,33 @@ export class AnalyticsController {
             )
         } catch (error) {
             next(error)
+        }
+    }
+
+    async getEndpointDetails(req, res, next) {
+        try {
+            const { endpoint, serviceName, method, startTime, endTime } = req.query;
+            if (!endpoint || !serviceName || !method) {
+                throw new AppError('endpoint, serviceName, and method are required', 400);
+            }
+
+            const isSuperAdmin = await this.ensureCanViewAnalytics(req);
+            const clientId = await this.resolveFinalClientId(req, isSuperAdmin);
+            if (!clientId) throw new AppError('Select a client before viewing endpoint details', 400);
+
+            const timeRange = this.validateTimeRange(startTime, endTime);
+            const details = await this.analyticsService.getEndpointDetails({
+                clientId,
+                serviceName,
+                endpoint,
+                method,
+                startTime: timeRange.startTime ? new Date(timeRange.startTime) : null,
+                endTime: timeRange.endTime ? new Date(timeRange.endTime) : null,
+            });
+
+            res.status(200).json(ResponseFormatter.success(details, 'Endpoint details retrieved successfully', 200));
+        } catch (error) {
+            next(error);
         }
     }
 }

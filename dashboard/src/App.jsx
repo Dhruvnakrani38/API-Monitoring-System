@@ -25,13 +25,18 @@ function AuthGate() {
     const [authView, setAuthView] = useState('landing'); // 'landing' | 'login' | 'signup'
     const queryClient = useQueryClient();
 
+    const applyProfile = (response) => {
+        if (!response?.success || !response.data || typeof response.data !== 'object') {
+            throw new Error('Authentication API did not return a valid profile');
+        }
+        setCurrentUser(response.data);
+        setIsAuthenticated(true);
+    };
+
     useEffect(() => {
         const controller = new AbortController();
         authApi.getProfile({ signal: controller.signal })
-            .then((response) => {
-                setCurrentUser(response.data);
-                setIsAuthenticated(true);
-            })
+            .then(applyProfile)
             .catch((err) => {
                 if (err.name !== 'CanceledError' && err.name !== 'AbortError') {
                     setIsAuthenticated(false);
@@ -43,8 +48,7 @@ function AuthGate() {
     const handleLoginSuccess = async () => {
         try {
             const response = await authApi.getProfile();
-            setCurrentUser(response.data);
-            setIsAuthenticated(true);
+            applyProfile(response);
         } catch {
             setIsAuthenticated(false);
         }
@@ -109,7 +113,7 @@ function AuthGate() {
         <DashboardLayout onLogout={handleLogout} currentUser={currentUser}>
             <Suspense fallback={pageFallback}>
                 <Routes>
-                    <Route path="/" element={<OverviewPage />} />
+                    <Route path="/" element={<OverviewPage currentUser={currentUser} />} />
                     <Route path="/approvals" element={currentUser?.role === 'super_admin' ? <PendingApprovalsPage /> : <Navigate to="/" replace />} />
                     <Route path="/team" element={currentUser?.role === 'client_admin' ? <TeamPage currentUser={currentUser} /> : <Navigate to="/" replace />} />
                     <Route path="/settings" element={<SettingsPage currentUser={currentUser} />} />

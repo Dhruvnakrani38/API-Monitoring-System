@@ -27,5 +27,6 @@ router.get("/stats", authenticate, (req, res, next) => analyticsController.getSt
 // Stats + TopEndpoints + TimeSeries - ek hi call me teen cheezein (parallel)
 // Frontend Overview page issi se data lata hai
 router.get("/dashboard", authenticate, (req, res, next) => analyticsController.getDashboard(req, res, next))
+router.get("/endpoint-details", authenticate, (req, res, next) => analyticsController.getEndpointDetails(req, res, next));
 
 export default router

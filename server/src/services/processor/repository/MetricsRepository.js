@@ -143,9 +143,9 @@ export class MetricsRepository extends BaseRepository {
         }
     }
 
-    async getTopEndpoints(clientId, limit = 10, startTime = null) {
+    async getTopEndpoints(clientId, limit = null, startTime = null) {
         try {
-            const safeLimit = Math.min(Math.max(1, limit), MAX_LIMIT);
+            const safeLimit = limit == null ? null : Math.min(Math.max(1, limit), MAX_LIMIT);
 
             let query = `
         SELECT
@@ -175,12 +175,15 @@ export class MetricsRepository extends BaseRepository {
                 paramIndex++;
             }
 
-            query += `
-        GROUP BY service_name, endpoint, method
-        ORDER BY total_hits DESC
-        LIMIT $${paramIndex}
-      `;
-            params.push(safeLimit);
+                        query += `
+                GROUP BY service_name, endpoint, method
+                ORDER BY total_hits DESC
+            `;
+
+                        if (safeLimit != null) {
+                                query += `LIMIT $${paramIndex}`;
+                                params.push(safeLimit);
+                        }
 
             const result = await this._query(query, params);
             return result.rows;

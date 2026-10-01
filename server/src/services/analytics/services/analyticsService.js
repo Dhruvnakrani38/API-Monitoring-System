@@ -12,9 +12,10 @@ import AppError from '../../../shared/utils/AppError.js';
 export class AnalyticsService {
     // Constructor: metricsRepository inject karta hai (PostgreSQL wrapper).
     // Agar nahi mila to error throw hoga.
-    constructor(metricsRepo) {
+    constructor(metricsRepo, apiHitRepo) {
         if (!metricsRepo) throw new Error("AnalyticsService requires a metricsRepository")
         this.metricsRepository = metricsRepo;
+        this.apiHitRepository = apiHitRepo;
     }
 
     // getOverallStats: Diye gaye clientId aur time range ke liye overall API stats return karta hai.
@@ -84,7 +85,7 @@ export class AnalyticsService {
     }
 
     // getTopEndpoints: Sabse zyada hit hone wale endpoints return karta hai.
-    // options.limit se kitne endpoints chahiye specify karo (default: 10).
+    // options.limit se endpoints limit kiye ja sakte hain; null ka matlab all endpoints hai.
     // options.startTime se filter ho sakta hai.
     async getTopEndpoints(clientId, options = {}) {
         try {
@@ -109,6 +110,32 @@ export class AnalyticsService {
             logger.error('Error getting top endpoints:', error);
             throw error;
         }
+    }
+
+    async getEndpointDetails(filters = {}) {
+        if (!this.apiHitRepository) throw new Error('AnalyticsService requires an apiHitRepository for endpoint details');
+
+        const details = await this.apiHitRepository.getEndpointDetails(filters);
+        const summary = details.summary || {};
+        const totalRequests = Number(summary.totalRequests) || 0;
+        const failedRequests = Number(summary.failedRequests) || 0;
+
+        return {
+            summary: {
+                totalRequests,
+                successfulRequests: Number(summary.successfulRequests) || 0,
+                failedRequests,
+                failureRate: totalRequests ? Number(((failedRequests / totalRequests) * 100).toFixed(2)) : 0,
+                averageLatency: Number(Number(summary.averageLatency || 0).toFixed(2)),
+                minimumLatency: Number(Number(summary.minimumLatency || 0).toFixed(2)),
+                maximumLatency: Number(Number(summary.maximumLatency || 0).toFixed(2)),
+            },
+            statusBreakdown: details.statusBreakdown.map((item) => ({
+                statusCode: Number(item._id),
+                count: Number(item.count),
+            })),
+            recentFailures: details.recentFailures,
+        };
     }
 
     // getTimeSeries: Time-based metrics return karta hai (charts ke liye).

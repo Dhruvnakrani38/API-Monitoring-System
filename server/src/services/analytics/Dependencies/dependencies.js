@@ -29,7 +29,7 @@ class Container {
         };
 
         // analyticsService: business logic, metricsRepository ke saath
-        const analyticsService = new AnalyticsService(repositories.metricsRepository);
+        const analyticsService = new AnalyticsService(repositories.metricsRepository, repositories.apiHitRepository);
 
         // Services: authService processor container se aata hai (already initialized)
         const services = {

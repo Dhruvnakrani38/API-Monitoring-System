@@ -1,5 +1,10 @@
 # PlusWatch Dashboard by DN Systems
 
+## API connection
+
+Local development uses the Vite proxy and the Docker API at `http://localhost:5000`.
+For a Vercel deployment, configure the `VITE_API_BASE_URL` environment variable in Vercel to an HTTPS backend URL ending in `/api`. A Vercel HTTPS page cannot securely call an HTTP-only local Docker server from another user's browser; use the local Vite URL when testing Docker locally, or deploy the API behind HTTPS.
+
 A modern React dashboard for visualizing API monitoring metrics in real-time.
 
 ## Features

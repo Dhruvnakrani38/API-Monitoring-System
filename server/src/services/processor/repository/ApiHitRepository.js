@@ -1,4 +1,5 @@
 import { BaseRepository } from "./BaseRepository.js";
+import mongoose from 'mongoose';
 
 
 export class ApiHitRepository extends BaseRepository {
@@ -52,6 +53,61 @@ export class ApiHitRepository extends BaseRepository {
             return count;
         } catch (error) {
             this.logger.error('Error counting API hits:', error);
+            throw error;
+        }
+    }
+
+    async getEndpointDetails({ clientId, serviceName, endpoint, method, startTime, endTime, recentLimit = 20 }) {
+        try {
+            const match = {
+                clientId: new mongoose.Types.ObjectId(clientId),
+                serviceName,
+                endpoint,
+                method,
+            };
+
+            if (startTime || endTime) {
+                match.timestamp = {};
+                if (startTime) match.timestamp.$gte = startTime;
+                if (endTime) match.timestamp.$lte = endTime;
+            }
+
+            const [result = {}] = await this.model.aggregate([
+                { $match: match },
+                {
+                    $facet: {
+                        summary: [{
+                            $group: {
+                                _id: null,
+                                totalRequests: { $sum: 1 },
+                                successfulRequests: { $sum: { $cond: [{ $lt: ['$statusCode', 400] }, 1, 0] } },
+                                failedRequests: { $sum: { $cond: [{ $gte: ['$statusCode', 400] }, 1, 0] } },
+                                averageLatency: { $avg: '$latencyMs' },
+                                minimumLatency: { $min: '$latencyMs' },
+                                maximumLatency: { $max: '$latencyMs' },
+                            },
+                        }],
+                        statusBreakdown: [
+                            { $group: { _id: '$statusCode', count: { $sum: 1 } } },
+                            { $sort: { _id: 1 } },
+                        ],
+                        recentFailures: [
+                            { $match: { statusCode: { $gte: 400 } } },
+                            { $sort: { timestamp: -1 } },
+                            { $limit: recentLimit },
+                            { $project: { _id: 0, timestamp: 1, method: 1, statusCode: 1, latencyMs: 1 } },
+                        ],
+                    },
+                },
+            ]);
+
+            return {
+                summary: result.summary?.[0] || {},
+                statusBreakdown: result.statusBreakdown || [],
+                recentFailures: result.recentFailures || [],
+            };
+        } catch (error) {
+            this.logger.error('Error getting endpoint details:', error);
             throw error;
         }
     }

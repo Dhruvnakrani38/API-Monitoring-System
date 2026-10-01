@@ -81,8 +81,8 @@ export const authApi = {
 };
 
 export const analyticsApi = {
-    getDashboard: async () => {
-        const response = await api.get('/analytics/dashboard');
+    getDashboard: async (params) => {
+        const response = await api.get('/analytics/dashboard', { params });
         const payload = response.data || {};
 
         payload.data = payload.data || {};
@@ -101,6 +101,10 @@ export const analyticsApi = {
         payload.data.recentActivity = payload.data.recentActitivy ?? payload.data.recentActivity ?? [];
 
         return payload;
+    },
+    getEndpointDetails: async (params) => {
+        const response = await api.get('/analytics/endpoint-details', { params });
+        return response.data;
     },
     getStats: async (params) => {
         const response = await api.get('/analytics/stats', { params });
