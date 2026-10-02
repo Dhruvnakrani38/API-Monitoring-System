@@ -212,12 +212,10 @@ async function startServer() {
         // Uncaught exceptions & promise rejections safety handlers
         process.on('uncaughtException', (error) => {
             logger.error('Uncaught Exception:', error);
-            gracefulShutdown('uncaughtException');
         });
 
         process.on('unhandledRejection', (reason, promise) => {
             logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-            gracefulShutdown('unhandledRejection');
         });
 
     } catch (error) {

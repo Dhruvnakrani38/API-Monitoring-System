@@ -35,5 +35,18 @@ export class SyntheticService {
         return result;
     }
 
-    async runDue() { for (const check of await this.repository.due()) await this.run(check); }
+    async runDue() {
+        try {
+            const checks = await this.repository.due();
+            for (const check of checks) {
+                try {
+                    await this.run(check);
+                } catch (err) {
+                    // Suppress individual check execution errors
+                }
+            }
+        } catch (err) {
+            // Suppress repository due query errors
+        }
+    }
 }

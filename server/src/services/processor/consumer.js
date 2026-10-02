@@ -380,8 +380,11 @@ async function startConsumerWithRetry() {
             logger.error(`Consumer start attempt ${attempt} failed:`, error);
 
             if (!startupRetry.shouldRetry(attempt)) {
-                logger.error('Max retries reached, exiting...');
-                process.exit(1);
+                logger.error('Max retries reached for consumer startup');
+                if (process.argv[1] && (process.argv[1].includes('consumer.js') || process.argv[1].includes('consumer'))) {
+                    process.exit(1);
+                }
+                return;
             }
 
             await startupRetry.wait(attempt - 1);
@@ -403,12 +406,16 @@ process.on('SIGTERM', async () => {
 
 process.on('uncaughtException', (error) => {
     logger.error('Uncaught exception:', error);
-    process.exit(1);
+    if (process.argv[1] && (process.argv[1].includes('consumer.js') || process.argv[1].includes('consumer'))) {
+        process.exit(1);
+    }
 });
 
 process.on('unhandledRejection', (reason, promise) => {
     logger.error('Unhandled promise rejection at:', promise, 'reason:', reason);
-    process.exit(1);
+    if (process.argv[1] && (process.argv[1].includes('consumer.js') || process.argv[1].includes('consumer'))) {
+        process.exit(1);
+    }
 });
 
 if (process.argv[1] && (process.argv[1].includes('consumer.js') || process.argv[1].includes('consumer'))) {

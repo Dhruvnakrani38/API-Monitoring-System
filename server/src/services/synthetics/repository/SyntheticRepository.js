@@ -49,8 +49,15 @@ export class SyntheticRepository {
         })).rows[0];
     }
 
-    async remove(id, clientId) {
-        const result = await this.postgres.query({ text: 'DELETE FROM synthetic_checks WHERE id = $1 AND client_id = $2 RETURNING id', values: [id, clientId] });
+    async remove(id, clientId = null) {
+        const values = [id];
+        let query = 'DELETE FROM synthetic_checks WHERE id = $1';
+        if (clientId) {
+            query += ' AND client_id = $2';
+            values.push(clientId);
+        }
+        query += ' RETURNING id';
+        const result = await this.postgres.query({ text: query, values });
         return Boolean(result.rows[0]);
     }
 
@@ -59,7 +66,14 @@ export class SyntheticRepository {
         return (await this.postgres.query({ text: 'UPDATE synthetic_checks SET last_run_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *', values: [id] })).rows[0];
     }
 
-    async runs(id, clientId) {
-        return (await this.postgres.query({ text: `SELECT r.* FROM synthetic_check_runs r JOIN synthetic_checks c ON c.id = r.check_id WHERE r.check_id = $1 AND c.client_id = $2 ORDER BY r.checked_at DESC LIMIT 50`, values: [id, clientId] })).rows;
+    async runs(id, clientId = null) {
+        const values = [id];
+        let query = `SELECT r.* FROM synthetic_check_runs r JOIN synthetic_checks c ON c.id = r.check_id WHERE r.check_id = $1`;
+        if (clientId) {
+            query += ` AND c.client_id = $2`;
+            values.push(clientId);
+        }
+        query += ` ORDER BY r.checked_at DESC LIMIT 50`;
+        return (await this.postgres.query({ text: query, values })).rows;
     }
 }

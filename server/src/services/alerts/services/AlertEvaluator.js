@@ -13,8 +13,18 @@ export class AlertEvaluator {
     }
 
     async evaluateAll() {
-        const rules = await this.alertRepository.listEnabledRules();
-        for (const rule of rules) await this.evaluateRule(rule);
+        try {
+            const rules = await this.alertRepository.listEnabledRules();
+            for (const rule of rules) {
+                try {
+                    await this.evaluateRule(rule);
+                } catch (err) {
+                    this.logger?.error?.(`Failed to evaluate alert rule ${rule.id}:`, err);
+                }
+            }
+        } catch (err) {
+            this.logger?.error?.('Failed to fetch enabled alert rules:', err);
+        }
     }
 
     async evaluateRule(rule) {
