@@ -150,8 +150,30 @@ export class AuthService {
                 throw new AppError("Email already exists", 409);
             }
 
+            const role = userData.role || APPLICATION_ROLES.CLIENT_VIEWER;
+
+            // Build permissions based on assigned role
+            const permissions = role === APPLICATION_ROLES.SUPER_ADMIN ? {
+                canCreateApiKeys: true,
+                canManageUsers: true,
+                canViewAnalytics: true,
+                canExportData: true,
+            } : role === APPLICATION_ROLES.CLIENT_ADMIN ? {
+                canCreateApiKeys: true,
+                canManageUsers: true,
+                canViewAnalytics: true,
+                canExportData: true,
+            } : {
+                canCreateApiKeys: false,
+                canManageUsers: false,
+                canViewAnalytics: true,
+                canExportData: false,
+            };
+
             const user = await this.userRepository.create({
                 ...userData,
+                role,
+                permissions,
                 isApproved: true,
                 approvalStatus: 'approved',
                 isActive: true
@@ -222,7 +244,10 @@ export class AuthService {
      */
     async approveUser(userId, adminUser, clientService, requestedRole = APPLICATION_ROLES.CLIENT_VIEWER, assignedClientId = null) {
         try {
-            const normalizedRole = requestedRole === APPLICATION_ROLES.CLIENT_ADMIN ? APPLICATION_ROLES.CLIENT_ADMIN : APPLICATION_ROLES.CLIENT_VIEWER;
+            // super_admin can promote to super_admin; otherwise normalise to a client role
+            const normalizedRole = requestedRole === APPLICATION_ROLES.SUPER_ADMIN
+                ? APPLICATION_ROLES.SUPER_ADMIN
+                : (requestedRole === APPLICATION_ROLES.CLIENT_ADMIN ? APPLICATION_ROLES.CLIENT_ADMIN : APPLICATION_ROLES.CLIENT_VIEWER);
 
             const user = await this.userRepository.findById(userId);
             if (!user) {
@@ -255,6 +280,26 @@ export class AuthService {
                     client,
                     apiKey: null
                 };
+            }
+
+            // super_admin approval: no client/API-key provisioning needed, just activate the account
+            if (normalizedRole === APPLICATION_ROLES.SUPER_ADMIN) {
+                const superAdminPermissions = {
+                    canCreateApiKeys: true,
+                    canManageUsers: true,
+                    canViewAnalytics: true,
+                    canExportData: true,
+                };
+                const finalUser = await User.findByIdAndUpdate(userId, {
+                    isApproved: true,
+                    approvalStatus: 'approved',
+                    isActive: true,
+                    role: APPLICATION_ROLES.SUPER_ADMIN,
+                    permissions: superAdminPermissions,
+                    approvedBy: adminUser.userId,
+                    approvedAt: new Date()
+                }, { new: true });
+                return { user: this.formatUserForResponse(finalUser), client: null, apiKey: null };
             }
 
             // 1. User approval status update in DB

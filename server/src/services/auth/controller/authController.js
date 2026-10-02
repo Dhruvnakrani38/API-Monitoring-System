@@ -88,9 +88,28 @@ export class AuthController {
      */
     async register(req, res, next) {
         try {
-            const { username, email, password, role } = req.body;
+            const { username, email, password, role, clientId } = req.body;
+            const requesterRole = req.user.role;
+
+            let assignedRole;
+            let assignedClientId;
+
+            if (requesterRole === APPLICATION_ROLES.SUPER_ADMIN) {
+                // Super admin can assign any role
+                assignedRole = role || APPLICATION_ROLES.CLIENT_VIEWER;
+                assignedClientId = clientId || null;
+            } else {
+                // CLIENT_ADMIN: can only create client_admin or client_viewer under their own client
+                assignedRole = role === APPLICATION_ROLES.CLIENT_ADMIN
+                    ? APPLICATION_ROLES.CLIENT_ADMIN
+                    : APPLICATION_ROLES.CLIENT_VIEWER;
+                assignedClientId = req.user.clientId; // Force own clientId
+            }
+
             const userData = {
-                username, email, password, role: role || APPLICATION_ROLES.CLIENT_VIEWER
+                username, email, password,
+                role: assignedRole,
+                clientId: assignedClientId || undefined
             };
 
             const { token, user } = await this.authService.register(userData);

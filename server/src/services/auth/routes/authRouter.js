@@ -51,7 +51,7 @@ router.post("/signup",
 router.post("/register",
     requestLogger,
     authenticate,                           // JWT check
-    authorize([APPLICATION_ROLES.SUPER_ADMIN]), // SUPER_ADMIN only
+    authorize([APPLICATION_ROLES.SUPER_ADMIN, APPLICATION_ROLES.CLIENT_ADMIN]), // SUPER_ADMIN or CLIENT_ADMIN
     validate(registrationSchema),
     (req, res, next) => authController.register(req, res, next)
 )
