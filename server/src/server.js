@@ -19,6 +19,7 @@ import alertRouter from './services/alerts/routes/alertRoutes.js';
 import alertsContainer from './services/alerts/Dependencies/dependencies.js';
 import syntheticRouter from './services/synthetics/routes/syntheticRoutes.js';
 import syntheticsContainer from './services/synthetics/Dependencies/dependencies.js';
+import { startConsumerWithRetry } from './services/processor/consumer.js';
 
 /**
  * 🟢 Express Application Initialization
@@ -171,6 +172,11 @@ async function startServer() {
             logger.info(`Server started on port ${config.port}`);
             logger.info(`Environment: ${config.node_env}`);
             logger.info(`API available at: http://localhost:${config.port}`);
+
+            // Start background Consumer worker (queue processor, alerts & synthetics evaluator)
+            startConsumerWithRetry().catch((err) => {
+                logger.error('Background consumer failed to start:', err);
+            });
         });
 
         // Safe Shutdown Function - Data loss avoid karne ke liye connections properly close karta hai

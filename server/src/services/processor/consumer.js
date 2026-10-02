@@ -411,6 +411,9 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-startConsumerWithRetry();
+if (process.argv[1] && (process.argv[1].includes('consumer.js') || process.argv[1].includes('consumer'))) {
+    startConsumerWithRetry();
+}
 
+export { startConsumerWithRetry };
 export default consumer;
