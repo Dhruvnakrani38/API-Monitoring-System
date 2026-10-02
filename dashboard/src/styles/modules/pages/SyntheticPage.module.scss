@@ -1,17 +1,49 @@
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
 .form { display: flex; flex-direction: column; gap: 0.8rem; }
 .form label { display: flex; flex-direction: column; gap: 0.3rem; color: hsl(var(--muted-foreground)); font-size: 0.78rem; font-weight: 600; }
-.form input, .form select { border: 1px solid hsl(var(--input)); border-radius: 4px; padding: 0.6rem; background: hsl(var(--background)); color: hsl(var(--foreground)); font: inherit; }
+.form input, .form select, .form textarea { border: 1px solid hsl(var(--input)); border-radius: 4px; padding: 0.6rem; background: hsl(var(--background)); color: hsl(var(--foreground)); font: inherit; }
+.form textarea { font-family: monospace; font-size: 0.8rem; resize: vertical; }
 .row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
 .form button { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; border: 0; border-radius: 4px; padding: 0.65rem; background: var(--shell-accent, hsl(var(--primary))); color: #17200f; font-weight: 700; cursor: pointer; }
+
+.assertionBox { border: 1px dashed hsl(var(--border)); border-radius: 6px; padding: 0.8rem; background: hsl(var(--card) / 0.4); display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.4rem; }
+.assertionBoxHeader { display: flex; align-items: center; gap: 0.4rem; color: hsl(var(--foreground)); font-size: 0.8rem; font-weight: 700; }
+.assertionInputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.4rem; align-items: center; }
+.assertionInputs input, .assertionInputs select { padding: 0.45rem; font-size: 0.75rem; }
+.addAstBtn { padding: 0.45rem 0.8rem !important; font-size: 0.75rem !important; border-radius: 4px; }
+.assertionList { display: flex; flex-direction: column; gap: 0.35rem; }
+.assertionItem { display: flex; align-items: center; justify-content: space-between; background: hsl(var(--background)); border: 1px solid hsl(var(--border) / 0.6); padding: 0.35rem 0.6rem; border-radius: 4px; font-size: 0.75rem; color: hsl(var(--muted-foreground)); }
+.assertionItem button { border: 0; background: transparent; color: #f07c6c; cursor: pointer; padding: 2px; }
+
+.errorBanner { background: rgba(240, 124, 108, 0.15); border: 1px solid #f07c6c; color: #f07c6c; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+
 .list { display: flex; flex-direction: column; gap: 0.5rem; }
-.check, .run { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid hsl(var(--border) / 0.6); padding: 0.75rem 0; cursor: pointer; }
+.check { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-bottom: 1px solid hsl(var(--border) / 0.6); padding: 0.75rem; border-radius: 6px; cursor: pointer; transition: background 0.15s ease; }
+.check:hover { background: hsl(var(--accent) / 0.3); }
+.selectedCheck { background: hsl(var(--accent) / 0.5) !important; border-left: 3px solid var(--shell-accent, hsl(var(--primary))); }
+.checkHeaderRow { display: flex; align-items: center; gap: 0.6rem; }
 .check > div { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
-.check span, .check small, .run { color: hsl(var(--muted-foreground)); font-size: 0.75rem; overflow-wrap: anywhere; }
+.check span, .check small { color: hsl(var(--muted-foreground)); font-size: 0.75rem; overflow-wrap: anywhere; }
 .check button { border: 0; background: transparent; color: #f07c6c; cursor: pointer; }
-.run { cursor: default; }
-.pass, .fail { font-size: 0.68rem; font-weight: 800; }
-.pass { color: #c6ef68; }.fail { color: #f07c6c; }
-.run time { flex: 1; text-align: right; font-size: 0.7rem; }
+
+.badge { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.15rem 0.45rem; border-radius: 12px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; }
+.badgePass { background: rgba(198, 239, 104, 0.15); color: #c6ef68; border: 1px solid rgba(198, 239, 104, 0.3); }
+.badgeDegraded { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.badgeFail { background: rgba(240, 124, 108, 0.15); color: #f07c6c; border: 1px solid rgba(240, 124, 108, 0.3); }
+
+.runCard { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.75rem 0; border-bottom: 1px solid hsl(var(--border) / 0.6); }
+.runMainRow { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.pass, .fail { font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.4rem; border-radius: 3px; }
+.pass { background: rgba(198, 239, 104, 0.15); color: #c6ef68; }
+.fail { background: rgba(240, 124, 108, 0.15); color: #f07c6c; }
+.runCode, .runLatency, .runAssertionsCount { color: hsl(var(--muted-foreground)); font-size: 0.75rem; }
+.runCard time { margin-left: auto; font-size: 0.7rem; color: hsl(var(--muted-foreground)); }
+
+.runAssertionDetails { display: flex; flex-direction: column; gap: 0.25rem; padding-left: 0.5rem; margin-top: 0.2rem; }
+.astPassed, .astFailed { display: flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; }
+.astPassed { color: #c6ef68; }
+.astFailed { color: #f07c6c; }
+.errorMessageText { font-size: 0.73rem; color: #f07c6c; background: rgba(240, 124, 108, 0.1); padding: 0.35rem 0.6rem; border-radius: 4px; margin-top: 0.2rem; }
+
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .row { grid-template-columns: 1fr; } .run { align-items: flex-start; flex-direction: column; } .run time { text-align: left; } }
+@media (max-width: 640px) { .row { grid-template-columns: 1fr; } .runMainRow { flex-direction: column; align-items: flex-start; gap: 0.3rem; } .runCard time { margin-left: 0; } }
