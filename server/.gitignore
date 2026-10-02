@@ -1,4 +1,7 @@
 node_modules
 logs
-
+cookies.txt
 .env
+.env.*
+!.env.railway.example
+!.env.example

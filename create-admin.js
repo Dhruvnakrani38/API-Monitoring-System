@@ -34,7 +34,7 @@ async function createAdmin() {
         }
 
         // Hash password
-        const password = 'Admin@PulseWatch2026!';
+        const password = process.env.ADMIN_PASSWORD || 'ChangeMeInProd123!';
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create super admin

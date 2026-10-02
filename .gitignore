@@ -2,8 +2,11 @@
 /server/logs/
 cookies.txt
 server/cookies.txt
-# data.md
-.env
-.env.local
-*.log
 data.md
+data_deploy.md
+.env
+.env.*
+!.env.example
+!.env.railway.example
+!.env.sample
+*.log

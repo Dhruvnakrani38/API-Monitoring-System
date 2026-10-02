@@ -8,7 +8,7 @@ async function setup() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: 'admin',
-                password: 'Admin@PulseWatch2026!'
+                password: process.env.ADMIN_PASSWORD || 'ChangeMeInProd123!'
             })
         });
         
