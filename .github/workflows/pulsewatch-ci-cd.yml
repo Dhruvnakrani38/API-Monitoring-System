@@ -1,0 +1,81 @@
+name: PulseWatch CI/CD Pipeline & Synthetic Verification Gate
+
+on:
+  push:
+    branches: [ "main", "phase-1" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  backend-ci:
+    name: Backend Service CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install Server Dependencies
+        run: |
+          cd server
+          npm install
+
+      - name: Validate Express Server Syntax & Dependencies
+        run: |
+          cd server
+          node --check src/server.js
+
+  frontend-ci:
+    name: Frontend Dashboard CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      - name: Install Dashboard Dependencies
+        run: |
+          cd dashboard
+          npm install
+
+      - name: Build React/Vite Frontend
+        run: |
+          cd dashboard
+          npm run build
+
+  synthetic-verification-gate:
+    name: Post-Deployment Synthetic Health Gate
+    needs: [backend-ci, frontend-ci]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/phase-1'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/node@v4
+        with:
+          node-version: '20'
+
+      - name: Run PulseWatch Synthetic Verification Gate
+        env:
+          PULSEWATCH_URL: ${{ secrets.PULSEWATCH_URL || 'http://localhost:5000' }}
+          PULSEWATCH_TOKEN: ${{ secrets.PULSEWATCH_TOKEN }}
+        run: |
+          if [ -z "$PULSEWATCH_TOKEN" ]; then
+            echo "⚠️ PULSEWATCH_TOKEN secret not configured. Skipping post-deployment verification in dry-run mode."
+          else
+            node scripts/pulsewatch-ci.js --url "$PULSEWATCH_URL" --token "$PULSEWATCH_TOKEN"
+          fi

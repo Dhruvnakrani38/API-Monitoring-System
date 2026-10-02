@@ -222,6 +222,22 @@ export class SyntheticService {
         return result;
     }
 
+    async runAll(clientId = null) {
+        const checks = await this.repository.list(clientId);
+        const results = [];
+        for (const check of checks) {
+            if (check.enabled === false) continue;
+            try {
+                const res = await this.run(check);
+                results.push({ id: check.id, name: check.name, success: res.success, statusCode: res.statusCode, latencyMs: res.latencyMs, errorMessage: res.errorMessage });
+            } catch (err) {
+                results.push({ id: check.id, name: check.name, success: false, errorMessage: err.message });
+            }
+        }
+        const allPassed = results.every(r => r.success);
+        return { allPassed, totalChecks: results.length, passedChecks: results.filter(r => r.success).length, results };
+    }
+
     async runDue() {
         try {
             const checks = await this.repository.due();
