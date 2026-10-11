@@ -5,6 +5,7 @@ import authContainer from '../../auth/Dependencies/dependencies.js';
 import { AlertRepository } from '../repository/AlertRepository.js';
 import { AlertService } from '../services/AlertService.js';
 import { AlertController } from '../controller/AlertController.js';
+import { AlertEvaluator } from '../services/AlertEvaluator.js';
 import { NotificationDispatcher } from '../services/NotificationDispatcher.js';
 import processorContainer from '../../processor/Dependencies/dependencies.js';
 
