@@ -5,8 +5,38 @@ const QUERY_TIMEOUT_MS = 30000;
 
 export class MetricsRepository extends BaseRepository {
     constructor({ logger: l, postgres: pg } = {}) {
-        super({ logger: l })
+        super({ logger: l });
         this.postgres = pg;
+        this.ensureSchema().catch(err => {
+            this.logger?.error('Error auto-creating endpoint_metrics schema:', err);
+        });
+    }
+
+    async ensureSchema() {
+        if (!this.postgres) return;
+        const ddl = `
+            CREATE TABLE IF NOT EXISTS endpoint_metrics (
+                id SERIAL PRIMARY KEY,
+                client_id VARCHAR(24) NOT NULL,
+                service_name VARCHAR(255) NOT NULL,
+                endpoint VARCHAR(500) NOT NULL,
+                method VARCHAR(10) NOT NULL,
+                time_bucket TIMESTAMP NOT NULL,
+                total_hits INTEGER DEFAULT 0,
+                error_hits INTEGER DEFAULT 0,
+                avg_latency NUMERIC(10,3) DEFAULT 0.000,
+                min_latency NUMERIC(10,3) DEFAULT 0.000,
+                max_latency NUMERIC(10,3) DEFAULT 0.000,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(client_id, service_name, endpoint, method, time_bucket)
+            );
+            CREATE INDEX IF NOT EXISTS idx_endpoint_metrics_client_id ON endpoint_metrics(client_id);
+            CREATE INDEX IF NOT EXISTS idx_endpoint_metrics_service ON endpoint_metrics(client_id, service_name);
+            CREATE INDEX IF NOT EXISTS idx_endpoint_metrics_time ON endpoint_metrics(time_bucket);
+            CREATE INDEX IF NOT EXISTS idx_endpoint_metrics_endpoint ON endpoint_metrics(client_id, service_name, endpoint);
+        `;
+        await this.postgres.query(ddl);
     }
 
 
