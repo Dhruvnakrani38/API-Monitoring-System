@@ -18,8 +18,9 @@ export default defineConfig({
         port: 5173,
         proxy: {
             '/api': {
-                target: 'http://localhost:5000',
+                target: process.env.VITE_PROXY_TARGET || 'https://api-monitoring-system-production-b5ad.up.railway.app',
                 changeOrigin: true,
+                secure: false,
             },
         },
     },

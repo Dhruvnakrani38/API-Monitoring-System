@@ -20,6 +20,19 @@ const api = axios.create({
     withCredentials: true,
 });
 
+// Attach Authorization Bearer token from localStorage if available (dual auth: cookies + bearer)
+api.interceptors.request.use((reqConfig) => {
+    try {
+        const token = localStorage.getItem('pulsewatch_token');
+        if (token) {
+            reqConfig.headers.Authorization = `Bearer ${token}`;
+        }
+    } catch {
+        // localStorage not available
+    }
+    return reqConfig;
+});
+
 /**
  * 🚨 Axios Response Interceptor (Auth Token Expiry Handler)
  * Kaam: Agar API response 401 Unauthorized return kare, to global `auth:unauthorized` event dispatch karke client ko automatically login screen par bhejta hai.
@@ -29,6 +42,11 @@ api.interceptors.response.use(
     (error) => {
         const isAuthRoute = error.config?.url?.includes('/auth/');
         if (error.response?.status === 401 && !isAuthRoute) {
+            try {
+                localStorage.removeItem('pulsewatch_token');
+            } catch {
+                // ignore
+            }
             window.dispatchEvent(new Event('auth:unauthorized'));
         }
         return Promise.reject(error);
@@ -58,6 +76,11 @@ export const authApi = {
         return response.data;
     },
     logout: async () => {
+        try {
+            localStorage.removeItem('pulsewatch_token');
+        } catch {
+            // ignore
+        }
         const response = await api.get('/auth/logout');
         return response.data;
     },

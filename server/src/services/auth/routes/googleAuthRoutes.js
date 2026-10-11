@@ -136,7 +136,7 @@ router.get('/callback', (req, res, next) => {
         });
 
         logger.info('Google OAuth login complete, redirecting to dashboard', { userId: user._id });
-        return res.redirect(`${frontendTarget}/?google_auth=success`);
+        return res.redirect(`${frontendTarget}/?google_auth=success&token=${encodeURIComponent(token)}`);
     })(req, res, next);
 });
 

@@ -15,11 +15,13 @@ const authenticate = async (req, res, next) => {
         let token = null;
 
         if (req.cookies && req.cookies.authToken) {
-            token = req.cookies.authToken
+            token = req.cookies.authToken;
+        } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+            token = req.headers.authorization.slice(7).trim();
         }
 
         if (!token) {
-            return res.status(401).json(ResponseFormatter.error("Authentication token is required", 401))
+            return res.status(401).json(ResponseFormatter.error("Authentication token is required", 401));
         }
 
         const decoded = jwt.verify(token, config.jwt.secret);

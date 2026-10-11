@@ -20,7 +20,11 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         if (params.get('google_auth') === 'success') {
-            // Cookie was set by server — trigger profile fetch
+            const token = params.get('token');
+            if (token) {
+                try { localStorage.setItem('pulsewatch_token', token); } catch { /* ignore */ }
+            }
+            // Cookie and/or token was set — trigger profile fetch
             onLoginSuccess();
         } else if (params.get('google_pending')) {
             setGooglePending(true);
@@ -38,6 +42,10 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
         mutationFn: authApi.login,
         onSuccess: (data) => {
             if (data.success) {
+                const token = data.data?.token;
+                if (token) {
+                    try { localStorage.setItem('pulsewatch_token', token); } catch { /* ignore */ }
+                }
                 onLoginSuccess();
             } else {
                 setError(data.message);
