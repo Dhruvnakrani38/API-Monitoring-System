@@ -34,9 +34,22 @@ export const onboardSuperAdminSchema = {
 export const registrationSchema = {
     username: {
         required: true,
+        minLength: 3,
+        custom: (value) => {
+            if (value && !/^[a-zA-Z0-9_.-]+$/.test(value)) {
+                return 'Username can only contain letters, numbers, underscores, dots, and hyphens';
+            }
+            return null;
+        }
     },
     email: {
         required: true,
+        custom: (value) => {
+            if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                return 'Please enter a valid email address';
+            }
+            return null;
+        }
     },
     password: {
         required: true,
@@ -54,9 +67,26 @@ export const registrationSchema = {
 
 /**
  * loginSchema: Login ke liye validation rules.
- * username aur password dono required hain.
+ * username ya email aur password required hain.
  */
 export const loginSchema = {
-    username: { required: true },
-    password: { required: true },
+    username: {
+        required: false,
+        custom: (value, body) => {
+            const identifier = value || body?.email || body?.identifier;
+            if (!identifier || (typeof identifier === 'string' && identifier.trim() === '')) {
+                return 'Username or email is required';
+            }
+            return null;
+        }
+    },
+    password: {
+        required: true,
+        custom: (value) => {
+            if (!value || (typeof value === 'string' && value.trim() === '')) {
+                return 'Password is required';
+            }
+            return null;
+        }
+    },
 };

@@ -201,7 +201,7 @@ export class AuthService {
      */
     async login(username, password) {
         try {
-            const user = await this.userRepository.findByUsername(username);
+            const user = await this.userRepository.findByUsernameOrEmail(username);
 
             if (!user) {
                 throw new AppError("Invalid Credentials", 401);

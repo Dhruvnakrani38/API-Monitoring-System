@@ -95,6 +95,36 @@ class MongoUserRepository extends BaseRepository {
     }
 
     /**
+     * findByUsernameOrEmail: Login ke time username ya email (Gmail) se user dhundhna.
+     * Case-insensitive matching handle karta hai.
+     * Reusability: authService.login me use hota hai.
+     */
+    async findByUsernameOrEmail(identifier) {
+        try {
+            if (!identifier) return null;
+            const trimmed = String(identifier).trim();
+            const lower = trimmed.toLowerCase();
+            const user = await this.model.findOne({
+                $or: [
+                    { username: trimmed },
+                    { username: lower },
+                    { email: lower },
+                    { email: trimmed }
+                ]
+            });
+            if (user) return user;
+
+            const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return await this.model.findOne({
+                username: { $regex: new RegExp(`^${escaped}$`, 'i') }
+            });
+        } catch (error) {
+            logger.error("Error finding user by username or email", error);
+            throw error;
+        }
+    }
+
+    /**
      * findAll: Saare active users dhundho (password exclude karke).
      * Reusability: Admin user management pages ke liye.
      */

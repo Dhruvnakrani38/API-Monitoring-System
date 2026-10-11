@@ -136,8 +136,9 @@ export class AuthController {
      */
     async login(req, res, next) {
         try {
-            const { username, password } = req.body;
-            const { user, token } = await this.authService.login(username, password);
+            const { username, email, identifier, password } = req.body;
+            const loginIdentifier = username || email || identifier;
+            const { user, token } = await this.authService.login(loginIdentifier, password);
 
             // JWT cookie me store karo (frontend ko manually handle nahi karna)
             res.cookie("authToken", token, {

@@ -26,7 +26,14 @@ function Signup({ onSignupSuccess, onToggleLogin, onBack }) {
             }
         },
         onError: (error) => {
-            setError(error.response?.data?.message || 'Failed to connect to server');
+            const data = error.response?.data;
+            if (data?.error && Array.isArray(data.error) && data.error.length > 0) {
+                setError(data.error.join('. '));
+            } else if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+                setError(data.errors.join('. '));
+            } else {
+                setError(data?.message || 'Failed to connect to server');
+            }
         },
     });
 

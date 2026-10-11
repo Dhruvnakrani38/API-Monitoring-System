@@ -44,7 +44,15 @@ const validate = (schema) => (req, res, next) => {
     })
 
     if (errors.length) {
-        return res.status(400).json(ResponseFormatter.error("Validation failed", 400, errors))
+        const specificMessage = errors.join(". ");
+        return res.status(400).json({
+            success: false,
+            message: specificMessage,
+            error: errors,
+            errors: errors,
+            statusCode: 400,
+            timestamp: new Date().toISOString()
+        });
     }
 
     next()

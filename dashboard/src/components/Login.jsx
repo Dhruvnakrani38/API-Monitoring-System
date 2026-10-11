@@ -20,7 +20,14 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
             }
         },
         onError: (error) => {
-            setError(error.response?.data?.message || 'Failed to connect to server');
+            const data = error.response?.data;
+            if (data?.error && Array.isArray(data.error) && data.error.length > 0) {
+                setError(data.error.join('. '));
+            } else if (data?.errors && Array.isArray(data.errors) && data.errors.length > 0) {
+                setError(data.errors.join('. '));
+            } else {
+                setError(data?.message || 'Failed to connect to server');
+            }
         },
     });
 
@@ -64,7 +71,7 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
                     <form onSubmit={handleSubmit} className={styles.form}>
                         <div className={styles.inputGroup}>
                             <label htmlFor="username" className={styles.label}>
-                                Username
+                                Username or Email
                             </label>
                             <div className={styles.inputContainer}>
                                 <User />
@@ -76,7 +83,7 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
                                     required
                                     disabled={loginMutation.isPending}
                                     className={styles.input}
-                                    placeholder="Enter your username"
+                                    placeholder="Enter your username or email"
                                 />
                             </div>
                         </div>
