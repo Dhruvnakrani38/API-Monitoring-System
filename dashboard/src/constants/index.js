@@ -4,5 +4,5 @@ export const QUERY_KEYS = {
     CURRENT_CLIENT: ['currentClient'],
 };
 
-// Dashboard query ko har 30 second mein refresh karne ka interval hai.
-export const REFETCH_INTERVAL = 30_000;
+// Dashboard query ko har 2 second mein refresh karne ka interval hai.
+export const REFETCH_INTERVAL = 2_000;

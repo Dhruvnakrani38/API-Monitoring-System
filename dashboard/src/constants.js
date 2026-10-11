@@ -6,5 +6,5 @@ export const QUERY_KEYS = {
     TIME_SERIES: ['timeSeries'],
 };
 
-// Ye dashboard polling ke beech ka samay milliseconds mein set karta hai.
-export const REFETCH_INTERVAL = 30_000;
+// Ye dashboard polling ke beech ka samay milliseconds mein set karta hai (2 seconds).
+export const REFETCH_INTERVAL = 2_000;
