@@ -28,12 +28,76 @@ function getArg(flag, defaultValue = null) {
     return defaultValue;
 }
 
-const BASE_URL = (getArg('--url', process.env.TEST_BASE_URL || 'https://api-monitoring-system-production-b5ad.up.railway.app')).replace(/\/$/, '');
-const ENDPOINT = getArg('--endpoint', '/health');
+const IS_INGEST = args.includes('--ingest');
+const DEFAULT_ENDPOINT = IS_INGEST ? '/api/hit' : '/health';
+const ENDPOINT = getArg('--endpoint', DEFAULT_ENDPOINT);
 const STEP_DURATION_SEC = parseInt(getArg('--step-sec', '10'), 10);
 const STEP_INCREMENT = parseInt(getArg('--step-inc', '100'), 10);
 const START_WORKERS = parseInt(getArg('--start-workers', '100'), 10);
 const MAX_WORKERS = parseInt(getArg('--max-workers', '500'), 10);
+const ADMIN_USER = getArg('--admin-user', 'admin');
+const ADMIN_PASS = getArg('--admin-pass', 'Admin@PulseWatch2026!');
+
+const SERVICES = [
+    { name: 'order-service', endpoints: ['/api/v1/checkout', '/api/v1/orders'], avgLatency: 110 },
+    { name: 'auth-service', endpoints: ['/api/v1/auth/login', '/api/v1/auth/verify'], avgLatency: 55 },
+    { name: 'payment-gateway', endpoints: ['/api/v1/payments/charge', '/api/v1/payments/webhook'], avgLatency: 180 },
+    { name: 'catalog-service', endpoints: ['/api/v1/products/search', '/api/v1/categories'], avgLatency: 35 },
+    { name: 'notification-service', endpoints: ['/api/v1/notifications/email', '/api/v1/notifications/push'], avgLatency: 75 },
+];
+
+let globalApiKey = null;
+
+async function getIngestApiKey() {
+    console.log('🔑 Authenticating as SuperAdmin to acquire Telemetry API Key...');
+    const url = new URL(`${BASE_URL}/api/auth/login`);
+    const isHttps = url.protocol === 'https:';
+    const client = isHttps ? https : http;
+
+    const token = await new Promise((resolve, reject) => {
+        const body = JSON.stringify({ username: ADMIN_USER, password: ADMIN_PASS });
+        const req = client.request({
+            hostname: url.hostname,
+            port: url.port || (isHttps ? 443 : 80),
+            path: url.pathname,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        }, res => {
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(data);
+                    resolve(parsed?.data?.token);
+                } catch { reject(new Error('Login parse failed')); }
+            });
+        });
+        req.on('error', reject);
+        req.write(body);
+        req.end();
+    });
+
+    if (!token) throw new Error('Could not obtain SuperAdmin token');
+
+    // Fetch existing clients
+    const clientsRes = await fetch(`${BASE_URL}/api/admin/clients`, { headers: { 'Authorization': `Bearer ${token}` } });
+    const clientsData = await clientsRes.json();
+    const clientId = clientsData?.data?.[0]?._id;
+
+    if (!clientId) throw new Error('No client found to acquire API key');
+
+    const keyRes = await fetch(`${BASE_URL}/api/admin/clients/${clientId}/api/keys/reveal`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: ADMIN_PASS })
+    });
+    const keyData = await keyRes.json();
+    const rawKey = keyData?.data?.[0]?.keyValue;
+
+    if (!rawKey) throw new Error('Could not reveal API key');
+    console.log(`✅ Telemetry Ingest Key verified: ${rawKey.substring(0, 10)}...`);
+    return rawKey;
+}
 
 const COLORS = {
     reset: '\x1b[0m',
@@ -64,16 +128,37 @@ function executeSingleRequest(urlObj) {
 
     const start = performance.now();
 
+    const headers = {
+        'Accept': 'application/json',
+        'User-Agent': 'PulseWatch-Stepped-Load-Tester/1.0',
+    };
+
+    let bodyData = null;
+    let method = 'GET';
+
+    if (IS_INGEST) {
+        method = 'POST';
+        headers['Content-Type'] = 'application/json';
+        headers['x-api-key'] = globalApiKey;
+        const svc = SERVICES[Math.floor(Math.random() * SERVICES.length)];
+        const ep = svc.endpoints[Math.floor(Math.random() * svc.endpoints.length)];
+        bodyData = JSON.stringify({
+            serviceName: svc.name,
+            endpoint: ep,
+            method: 'GET',
+            statusCode: Math.random() < 0.95 ? 200 : 500,
+            latencyMs: Math.round(svc.avgLatency + (Math.random() - 0.5) * 40),
+        });
+        headers['Content-Length'] = Buffer.byteLength(bodyData);
+    }
+
     return new Promise((resolve) => {
         const req = client.request({
             hostname: urlObj.hostname,
             port: urlObj.port || (isHttps ? 443 : 80),
             path: urlObj.pathname + urlObj.search,
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'PulseWatch-Stepped-Load-Tester/1.0',
-            },
+            method,
+            headers,
             agent,
             timeout: 10000,
         }, (res) => {
@@ -110,6 +195,7 @@ function executeSingleRequest(urlObj) {
             });
         });
 
+        if (bodyData) req.write(bodyData);
         req.end();
     });
 }
@@ -214,6 +300,10 @@ async function run() {
     console.log(`  📈 Step Increment:+${COLORS.bold}${STEP_INCREMENT} concurrent workers every 10s${COLORS.reset}`);
     console.log(`  🎯 Worker Stages: ${START_WORKERS} -> ${MAX_WORKERS} workers`);
     console.log(`================================================================================\n`);
+
+    if (IS_INGEST) {
+        globalApiKey = await getIngestApiKey();
+    }
 
     const urlObj = new URL(`${BASE_URL}${ENDPOINT}`);
     const stageReports = [];
