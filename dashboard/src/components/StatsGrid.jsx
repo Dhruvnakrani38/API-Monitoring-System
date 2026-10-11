@@ -1,5 +1,5 @@
 import { Card, CardContent } from './ui';
-import { TrendingUp, Clock, AlertTriangle, CheckCircle2, Layers, Zap } from 'lucide-react';
+import { TrendingUp, Clock, AlertTriangle, CheckCircle2, Layers, Zap, Gauge, ShieldCheck } from 'lucide-react';
 import styles from '../styles/modules/StatsGrid.module.scss';
 
 // Ye component summary metrics ko icon aur progress styling wale cards mein badalta hai.
@@ -47,6 +47,26 @@ function StatsGrid({ stats }) {
             bgClass: styles.bgGreen,
             textClass: styles.textGreen,
             progressClass: styles.progressGreen,
+        },
+        {
+            title: 'P95 Tail Latency',
+            value: `${(stats.percentiles?.p95 ?? stats.avgLatency).toFixed(1)} ms`,
+            subtitle: `P99: ${(stats.percentiles?.p99 ?? stats.avgLatency).toFixed(1)}ms · P50: ${(stats.percentiles?.p50 ?? stats.avgLatency).toFixed(1)}ms`,
+            icon: Gauge,
+            gradientClass: styles.gradientPurple,
+            bgClass: styles.bgPurple,
+            textClass: styles.textPurple,
+            progressClass: styles.progressPurple,
+        },
+        {
+            title: 'SLA Availability',
+            value: `${(stats.sla?.uptimePercentage ?? successRate).toFixed(2)}%`,
+            subtitle: `Target: ${stats.sla?.targetUptime ?? 99.9}% (${stats.sla?.isUptimeCompliant !== false ? 'Meeting SLA' : 'Breached'})`,
+            icon: ShieldCheck,
+            gradientClass: stats.sla?.isUptimeCompliant !== false ? styles.gradientGreen : styles.gradientRed,
+            bgClass: stats.sla?.isUptimeCompliant !== false ? styles.bgGreen : styles.bgRed,
+            textClass: stats.sla?.isUptimeCompliant !== false ? styles.textGreen : styles.textRed,
+            progressClass: stats.sla?.isUptimeCompliant !== false ? styles.progressGreen : styles.progressRed,
         },
         {
             title: 'Unique Services',

@@ -318,3 +318,95 @@
     margin: 0;
   }
 }
+
+.slaBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.6);
+  background: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+}
+
+.slaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 160px;
+}
+
+.slaLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: hsl(var(--muted-foreground));
+}
+
+.slaValueRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.slaValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+}
+
+.slaBadge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  background: rgba(108, 185, 201, 0.15);
+  color: #6cb9c9;
+}
+
+.badgeSuccess {
+  background: rgba(155, 220, 101, 0.15);
+  color: #9bdc65;
+}
+
+.badgeDanger {
+  background: rgba(240, 124, 108, 0.15);
+  color: #f07c6c;
+}
+
+.slaDivider {
+  width: 1px;
+  height: 2.5rem;
+  background: hsl(var(--border) / 0.5);
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
+}
+
+.percentilesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+
+  span {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.375rem;
+    background: hsl(var(--background) / 0.6);
+    border: 1px solid hsl(var(--border) / 0.4);
+    color: hsl(var(--muted-foreground));
+
+    b {
+      color: hsl(var(--foreground));
+      margin-left: 0.25rem;
+    }
+  }
+}

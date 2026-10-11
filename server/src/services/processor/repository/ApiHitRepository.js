@@ -112,6 +112,80 @@ export class ApiHitRepository extends BaseRepository {
         }
     }
 
+    /**
+     * getLatencyPercentilesAndSla: Calculates p50, p90, p95, p99 tail latency percentiles
+     * and SLA availability and latency compliance scores.
+     */
+    async getLatencyPercentilesAndSla({ clientId, serviceName, endpoint, method, startTime, endTime, targetLatencyMs = 500, slaTargetUptime = 99.9 } = {}) {
+        try {
+            const match = {};
+            if (clientId) {
+                match.clientId = new mongoose.Types.ObjectId(clientId);
+            }
+            if (serviceName) match.serviceName = serviceName;
+            if (endpoint) match.endpoint = endpoint;
+            if (method) match.method = method;
+
+            if (startTime || endTime) {
+                match.timestamp = {};
+                if (startTime) match.timestamp.$gte = new Date(startTime);
+                if (endTime) match.timestamp.$lte = new Date(endTime);
+            }
+
+            const hits = await this.model.find(match, { latencyMs: 1, statusCode: 1 }).lean();
+            if (!hits || hits.length === 0) {
+                return {
+                    totalRequests: 0,
+                    percentiles: { p50: 0, p90: 0, p95: 0, p99: 0 },
+                    sla: {
+                        uptimePercentage: 100,
+                        targetUptime: slaTargetUptime,
+                        isUptimeCompliant: true,
+                        latencyCompliancePercentage: 100,
+                        targetLatencyMs,
+                        isLatencyCompliant: true,
+                        status: 'compliant',
+                    },
+                };
+            }
+
+            const latencies = hits.map((h) => Number(h.latencyMs) || 0).sort((a, b) => a - b);
+            const total = latencies.length;
+            const getP = (p) => {
+                const idx = Math.min(Math.max(0, Math.ceil(p * total) - 1), total - 1);
+                return Number(latencies[idx].toFixed(2));
+            };
+
+            const successCount = hits.filter((h) => h.statusCode < 400).length;
+            const underTargetCount = latencies.filter((l) => l <= targetLatencyMs).length;
+
+            const uptimePercentage = total > 0 ? Number(((successCount / total) * 100).toFixed(3)) : 100;
+            const latencyCompliancePercentage = total > 0 ? Number(((underTargetCount / total) * 100).toFixed(2)) : 100;
+
+            return {
+                totalRequests: total,
+                percentiles: {
+                    p50: getP(0.50),
+                    p90: getP(0.90),
+                    p95: getP(0.95),
+                    p99: getP(0.99),
+                },
+                sla: {
+                    uptimePercentage,
+                    targetUptime: slaTargetUptime,
+                    isUptimeCompliant: uptimePercentage >= slaTargetUptime,
+                    latencyCompliancePercentage,
+                    targetLatencyMs,
+                    isLatencyCompliant: latencyCompliancePercentage >= 95.0,
+                    status: uptimePercentage >= slaTargetUptime ? 'compliant' : 'breached',
+                },
+            };
+        } catch (error) {
+            this.logger.error('Error calculating latency percentiles and SLA:', error);
+            throw error;
+        }
+    }
+
     // Retention cutoff se purane raw hit documents delete karo.
     async deleteOldHits(beforeDate) {
         try {

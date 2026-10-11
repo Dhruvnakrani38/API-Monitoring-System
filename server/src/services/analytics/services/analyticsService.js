@@ -32,6 +32,33 @@ export class AnalyticsService {
                 endTime
             )
 
+            let percentiles = { p50: 0, p90: 0, p95: 0, p99: 0 };
+            let sla = {
+                uptimePercentage: 100,
+                targetUptime: 99.9,
+                isUptimeCompliant: true,
+                latencyCompliancePercentage: 100,
+                targetLatencyMs: 500,
+                isLatencyCompliant: true,
+                status: 'compliant',
+            };
+
+            if (this.apiHitRepository && typeof this.apiHitRepository.getLatencyPercentilesAndSla === 'function') {
+                try {
+                    const slaData = await this.apiHitRepository.getLatencyPercentilesAndSla({
+                        clientId,
+                        startTime,
+                        endTime,
+                    });
+                    if (slaData) {
+                        percentiles = slaData.percentiles;
+                        sla = slaData.sla;
+                    }
+                } catch (err) {
+                    logger.warn('Failed to calculate percentiles and SLA from apiHitRepository:', err.message);
+                }
+            }
+
             const totalHits = parseInt(stats.total_hits) || 0;
             const errorHits = parseInt(stats.error_hits) || 0;
             // Error rate calculate karo (percentage mein)
@@ -43,6 +70,8 @@ export class AnalyticsService {
                 successHits: totalHits - errorHits,
                 errorRate: parseFloat(errorRate.toFixed(2)),
                 avgLatency: parseFloat(stats.avg_latency) || 0,
+                percentiles,
+                sla,
                 uniqueServices: parseInt(stats.unique_services) || 0,
                 uniqueEndpoints: parseInt(stats.unique_endpoints) || 0,
                 timeRange: {
@@ -116,6 +145,15 @@ export class AnalyticsService {
         if (!this.apiHitRepository) throw new Error('AnalyticsService requires an apiHitRepository for endpoint details');
 
         const details = await this.apiHitRepository.getEndpointDetails(filters);
+        let slaData = null;
+        if (typeof this.apiHitRepository.getLatencyPercentilesAndSla === 'function') {
+            try {
+                slaData = await this.apiHitRepository.getLatencyPercentilesAndSla(filters);
+            } catch (err) {
+                logger.warn('Failed to calculate endpoint SLA:', err.message);
+            }
+        }
+
         const summary = details.summary || {};
         const totalRequests = Number(summary.totalRequests) || 0;
         const failedRequests = Number(summary.failedRequests) || 0;
@@ -129,6 +167,8 @@ export class AnalyticsService {
                 averageLatency: Number(Number(summary.averageLatency || 0).toFixed(2)),
                 minimumLatency: Number(Number(summary.minimumLatency || 0).toFixed(2)),
                 maximumLatency: Number(Number(summary.maximumLatency || 0).toFixed(2)),
+                percentiles: slaData?.percentiles || { p50: 0, p90: 0, p95: 0, p99: 0 },
+                sla: slaData?.sla || null,
             },
             statusBreakdown: details.statusBreakdown.map((item) => ({
                 statusCode: Number(item._id),

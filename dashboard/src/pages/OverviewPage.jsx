@@ -89,6 +89,40 @@ export function OverviewPage({ currentUser }) {
 
             <StatsGrid stats={stats} />
 
+            {stats && (
+                <div className={styles.slaBanner}>
+                    <div className={styles.slaItem}>
+                        <span className={styles.slaLabel}>Uptime SLA Compliance</span>
+                        <div className={styles.slaValueRow}>
+                            <span className={styles.slaValue}>{(stats.sla?.uptimePercentage ?? (100 - stats.errorRate)).toFixed(2)}%</span>
+                            <span className={`${styles.slaBadge} ${stats.sla?.isUptimeCompliant !== false ? styles.badgeSuccess : styles.badgeDanger}`}>
+                                {stats.sla?.isUptimeCompliant !== false ? `Meeting ${stats.sla?.targetUptime ?? 99.9}% Target` : 'SLA Breached'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className={styles.slaDivider} />
+                    <div className={styles.slaItem}>
+                        <span className={styles.slaLabel}>Latency SLA (≤ 500ms)</span>
+                        <div className={styles.slaValueRow}>
+                            <span className={styles.slaValue}>{(stats.sla?.latencyCompliancePercentage ?? 100).toFixed(1)}%</span>
+                            <span className={`${styles.slaBadge} ${stats.sla?.isLatencyCompliant !== false ? styles.badgeSuccess : styles.badgeDanger}`}>
+                                {stats.sla?.isLatencyCompliant !== false ? 'Compliant' : 'High Latency'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className={styles.slaDivider} />
+                    <div className={styles.slaItem}>
+                        <span className={styles.slaLabel}>Latency Percentiles</span>
+                        <div className={styles.percentilesRow}>
+                            <span title="Median response time">P50: <b>{(stats.percentiles?.p50 ?? stats.avgLatency).toFixed(1)}ms</b></span>
+                            <span title="90% of requests faster than">P90: <b>{(stats.percentiles?.p90 ?? stats.avgLatency).toFixed(1)}ms</b></span>
+                            <span title="95% of requests faster than">P95: <b>{(stats.percentiles?.p95 ?? stats.avgLatency).toFixed(1)}ms</b></span>
+                            <span title="Worst 1% of requests">P99: <b>{(stats.percentiles?.p99 ?? stats.avgLatency).toFixed(1)}ms</b></span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className={styles.gridTwoCols}>
                 <ApiHitsChart stats={stats} />
                 <StatusDistributionChart data={statusData} />
@@ -128,8 +162,20 @@ export function OverviewPage({ currentUser }) {
                                     <div><strong>{detailQuery.data.data.summary.failureRate}%</strong><span>Failure rate</span></div>
                                 </div>
                                 <div className={styles.detailSection}>
-                                    <h4>Latency</h4>
-                                    <div className={styles.latencyStats}><span><Clock3 /> Avg <b>{detailQuery.data.data.summary.averageLatency} ms</b></span><span>Min <b>{detailQuery.data.data.summary.minimumLatency} ms</b></span><span>Max <b>{detailQuery.data.data.summary.maximumLatency} ms</b></span></div>
+                                    <h4>Latency & Percentiles</h4>
+                                    <div className={styles.latencyStats}>
+                                        <span><Clock3 /> Avg <b>{detailQuery.data.data.summary.averageLatency} ms</b></span>
+                                        <span>Min <b>{detailQuery.data.data.summary.minimumLatency} ms</b></span>
+                                        <span>Max <b>{detailQuery.data.data.summary.maximumLatency} ms</b></span>
+                                        {detailQuery.data.data.summary.percentiles && (
+                                            <>
+                                                <span>P50 <b>{detailQuery.data.data.summary.percentiles.p50} ms</b></span>
+                                                <span>P90 <b>{detailQuery.data.data.summary.percentiles.p90} ms</b></span>
+                                                <span>P95 <b>{detailQuery.data.data.summary.percentiles.p95} ms</b></span>
+                                                <span>P99 <b>{detailQuery.data.data.summary.percentiles.p99} ms</b></span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                                 <div className={styles.detailSection}>
                                     <h4>HTTP status breakdown</h4>
