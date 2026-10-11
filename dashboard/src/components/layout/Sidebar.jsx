@@ -8,6 +8,7 @@ import {
     Settings,
     ShieldCheck,
     UsersRound,
+    Workflow,
 } from 'lucide-react';
 import styles from '../../styles/modules/layout/Sidebar.module.scss';
 
@@ -31,6 +32,7 @@ const navItems = [
         description: 'Alert rules and incidents',
     },
     { title: 'Synthetic Checks', href: '/synthetics', icon: Globe2, description: 'Scheduled API checks' },
+    { title: 'Journeys', href: '/journeys', icon: Workflow, description: 'Multi-step API journeys' },
 ];
 
 const bottomNavItems = [

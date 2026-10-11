@@ -69,6 +69,16 @@ const config = {
         secure: process.env.NODE_ENV === "production",
         sameSite: process.env.COOKIE_SAME_SITE || (process.env.NODE_ENV === "production" ? "none" : "lax"),
         expiresIn: 24 * 60 * 60 * 1000 // 1 Day TTL
+    },
+
+    // 🌐 Google OAuth 2.0 Credentials
+    // Usage: Passport Google strategy for social sign-in.
+    // Required env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL, FRONTEND_URL
+    google: {
+        clientId: process.env.GOOGLE_CLIENT_ID || null,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET || null,
+        callbackUrl: process.env.GOOGLE_CALLBACK_URL || null,
+        frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
     }
 };
 

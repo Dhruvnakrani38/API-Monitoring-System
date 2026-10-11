@@ -141,6 +141,10 @@ export const alertsApi = {
         const response = await api.get('/alerts/incidents', { params: clientId ? { clientId } : undefined });
         return response.data;
     },
+    testWebhook: async ({ channel, url }) => {
+        const response = await api.post('/alerts/test-webhook', { channel, url });
+        return response.data;
+    },
 };
 
 export const syntheticsApi = {
@@ -148,6 +152,15 @@ export const syntheticsApi = {
     createCheck: async (check) => (await api.post('/synthetics', check)).data,
     deleteCheck: async (id, clientId) => (await api.delete(`/synthetics/${id}`, { params: clientId ? { clientId } : undefined })).data,
     getRuns: async (id, clientId) => (await api.get(`/synthetics/${id}/runs`, { params: clientId ? { clientId } : undefined })).data,
+};
+
+export const journeysApi = {
+    getJourneys: async (clientId) => (await api.get('/journeys', { params: clientId ? { clientId } : undefined })).data,
+    createJourney: async (journey) => (await api.post('/journeys', journey)).data,
+    getJourney: async (id, clientId) => (await api.get(`/journeys/${id}`, { params: clientId ? { clientId } : undefined })).data,
+    deleteJourney: async (id, clientId) => (await api.delete(`/journeys/${id}`, { params: clientId ? { clientId } : undefined })).data,
+    getRuns: async (id, clientId) => (await api.get(`/journeys/${id}/runs`, { params: clientId ? { clientId } : undefined })).data,
+    triggerRun: async (id, clientId) => (await api.post(`/journeys/${id}/run`, { clientId })).data,
 };
 
 export const clientApi = {

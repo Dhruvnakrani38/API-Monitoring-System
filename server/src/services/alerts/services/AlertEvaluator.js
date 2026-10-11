@@ -6,9 +6,10 @@ const compare = (value, operator, threshold) => ({
 }[operator]);
 
 export class AlertEvaluator {
-    constructor({ alertRepository, metricsRepository, logger }) {
+    constructor({ alertRepository, metricsRepository, notificationDispatcher, logger }) {
         this.alertRepository = alertRepository;
         this.metricsRepository = metricsRepository;
+        this.notificationDispatcher = notificationDispatcher;
         this.logger = logger;
     }
 
@@ -42,8 +43,26 @@ export class AlertEvaluator {
         const openIncident = await this.alertRepository.findOpenIncident(rule.id);
         const message = `${rule.name}: ${rule.metric} is ${value.toFixed(2)} (threshold ${rule.operator} ${rule.threshold})`;
 
-        if (breached && !openIncident) await this.alertRepository.openIncident(rule, value, message);
-        else if (breached && openIncident) await this.alertRepository.touchIncident(openIncident.id, value, message);
-        else if (!breached && openIncident) await this.alertRepository.resolveIncident(openIncident.id);
+        if (breached && !openIncident) {
+            const incident = await this.alertRepository.openIncident(rule, value, message);
+            if (this.notificationDispatcher) {
+                try {
+                    await this.notificationDispatcher.dispatchAlert({ rule, incident, status: 'triggered' });
+                } catch (dispatchErr) {
+                    this.logger?.warn?.('Failed to dispatch alert notification:', dispatchErr);
+                }
+            }
+        } else if (breached && openIncident) {
+            await this.alertRepository.touchIncident(openIncident.id, value, message);
+        } else if (!breached && openIncident) {
+            const resolvedIncident = await this.alertRepository.resolveIncident(openIncident.id);
+            if (this.notificationDispatcher) {
+                try {
+                    await this.notificationDispatcher.dispatchAlert({ rule, incident: resolvedIncident || openIncident, status: 'resolved' });
+                } catch (dispatchErr) {
+                    this.logger?.warn?.('Failed to dispatch resolved notification:', dispatchErr);
+                }
+            }
+        }
     }
 }

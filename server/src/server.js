@@ -12,14 +12,17 @@ import cookieParser from "cookie-parser";
 
 // Routers - Pure system routing modules
 import authRouter from "./services/auth/routes/authRouter.js";
+import googleAuthRouter from './services/auth/routes/googleAuthRoutes.js';
 import clientRouter from './services/client/routes/clientRoutes.js';
 import ingestRouter from "./services/ingest/routes/ingestRoutes.js";
 import analyticsRouter from "./services/analytics/routes/analyticsRoutes.js";
 import alertRouter from './services/alerts/routes/alertRoutes.js';
 import alertsContainer from './services/alerts/Dependencies/dependencies.js';
 import syntheticRouter from './services/synthetics/routes/syntheticRoutes.js';
+import journeyRouter from './services/synthetics/routes/journeyRoutes.js';
 import syntheticsContainer from './services/synthetics/Dependencies/dependencies.js';
 import { startConsumerWithRetry } from './services/processor/consumer.js';
+import passport from 'passport';
 
 /**
  * 🟢 Express Application Initialization
@@ -41,6 +44,7 @@ app.use(cors({
 app.use(cookieParser()); // Auth tokens/cookies parse karta hai
 app.use(express.json()); // JSON payload read karne ke liye
 app.use(express.urlencoded({ extended: true })); // URL encoded forms parse karne ke liye
+app.use(passport.initialize()); // Passport init (no sessions — stateless JWT)
 
 /**
  * 📝 Request Logging Middleware
@@ -106,10 +110,12 @@ app.get("/", (req, res) => {
  * - /api: Client Onboarding & API Key Management
  */
 app.use("/api/auth", authRouter);
+app.use("/api/auth/google", googleAuthRouter);
 app.use("/api/hit", ingestRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/alerts", alertRouter);
 app.use("/api/synthetics", syntheticRouter);
+app.use("/api/journeys", journeyRouter);
 app.use("/api", clientRouter);
 
 /**
@@ -144,6 +150,7 @@ async function initializeConnection() {
         // 2b. Ensure durable alert and incident tables exist before serving requests.
         await alertsContainer.repositories.alertRepository.ensureSchema();
         await syntheticsContainer.repositories.syntheticRepository.ensureSchema();
+        await syntheticsContainer.repositories.journeyRepository.ensureSchema();
 
         // 3. Connect to RabbitMQ Queue Broker & Assert Queues
         try {

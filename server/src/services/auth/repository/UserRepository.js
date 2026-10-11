@@ -193,6 +193,25 @@ class MongoUserRepository extends BaseRepository {
             throw error;
         }
     }
+    /**
+     * createOAuthUser: Google OAuth se aaye naye user ko create karo (password nahi hoga).
+     * password field bypass karke direct Mongoose save karta hai.
+     */
+    async createOAuthUser(userData) {
+        try {
+            const user = new this.model({
+                ...userData,
+                // No password field — authProvider='google' makes it optional
+            });
+            // Run validation but skip password requirement via authProvider flag
+            await user.save();
+            logger.info('OAuth user created', { email: user.email, provider: user.authProvider });
+            return user;
+        } catch (error) {
+            logger.error('Error creating OAuth user', error);
+            throw error;
+        }
+    }
 }
 
 // Singleton export - puri app me ek hi instance use hoga

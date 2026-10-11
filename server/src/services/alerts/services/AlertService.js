@@ -3,8 +3,9 @@ const OPERATORS = new Set(['>', '>=', '<', '<=']);
 const SEVERITIES = new Set(['info', 'warning', 'critical']);
 
 export class AlertService {
-    constructor({ repository }) {
+    constructor({ repository, notificationDispatcher }) {
         this.repository = repository;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     validateRule(input, partial = false) {
@@ -18,6 +19,9 @@ export class AlertService {
         if (input.endpoint !== undefined) rule.endpoint = input.endpoint || null;
         if (input.severity !== undefined) rule.severity = input.severity;
         if (input.enabled !== undefined) rule.enabled = Boolean(input.enabled);
+        if (input.slackWebhookUrl !== undefined) rule.slackWebhookUrl = input.slackWebhookUrl ? String(input.slackWebhookUrl).trim() : null;
+        if (input.discordWebhookUrl !== undefined) rule.discordWebhookUrl = input.discordWebhookUrl ? String(input.discordWebhookUrl).trim() : null;
+        if (input.webhookUrl !== undefined) rule.webhookUrl = input.webhookUrl ? String(input.webhookUrl).trim() : null;
 
         if (rule.name !== undefined && (!rule.name || rule.name.length > 160)) throw new Error('Alert name is required and must be 160 characters or fewer');
         if (rule.metric !== undefined && !METRICS.has(rule.metric)) throw new Error('Unsupported alert metric');
@@ -41,4 +45,31 @@ export class AlertService {
     }
 
     deleteRule(id, clientId) { return this.repository.deleteRule(id, clientId); }
+
+    async testWebhook({ channel, url }) {
+        if (!url) throw new Error('Webhook URL is required');
+        if (!this.notificationDispatcher) throw new Error('NotificationDispatcher is not available');
+
+        const sampleRule = {
+            name: 'PulseWatch Test Alert',
+            metric: 'error_rate',
+            operator: '>',
+            threshold: 5,
+            severity: 'warning',
+            service_name: 'api-service',
+            endpoint: '/api/v1/checkout',
+        };
+        const sampleIncident = {
+            message: 'Test notification triggered from PulseWatch Alerts Dashboard.',
+            opened_at: new Date().toISOString(),
+        };
+
+        if (channel === 'slack') {
+            return await this.notificationDispatcher.sendSlack(url, { rule: sampleRule, incident: sampleIncident, status: 'triggered' });
+        } else if (channel === 'discord') {
+            return await this.notificationDispatcher.sendDiscord(url, { rule: sampleRule, incident: sampleIncident, status: 'triggered' });
+        } else {
+            return await this.notificationDispatcher.sendWebhook(url, { rule: sampleRule, incident: sampleIncident, status: 'triggered' });
+        }
+    }
 }

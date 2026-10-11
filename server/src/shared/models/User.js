@@ -36,10 +36,11 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true,
+        required: function () { return !this.authProvider; }, // Not required for OAuth users
         minlength: 6,
         validate: {
             validator: function (password) {
+                if (!password) return true; // OAuth users have no password
                 if (this.isModified('password') && password && !password.startsWith('$2a$')) {
                     const validation = SecurityUtils.validatePassword(password)
                     return validation.success
@@ -49,14 +50,17 @@ const userSchema = new mongoose.Schema({
             message: function (props) {
                 if (props.value && !props.value.startsWith('$2a$')) {
                     const validation = SecurityUtils.validatePassword(props.value)
-                    // ["Password is required", "Password must contain at least one uppercase letter"]
-                    // "Password is required. Password must contain at least one uppercase letter."
                     return validation.errors.join(". ");
                 };
                 return "Password validation failed"
             }
         },
     },
+    // ── Google OAuth Fields ──────────────────────────────────────────────
+    googleId: { type: String, sparse: true, index: true },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    avatarUrl: { type: String, default: null },
+    displayName: { type: String, default: null },
     role: {
         type: String,
         enum: ['super_admin', 'client_admin', 'client_viewer'],

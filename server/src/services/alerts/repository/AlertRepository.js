@@ -24,6 +24,10 @@ export class AlertRepository {
             );
             CREATE INDEX IF NOT EXISTS idx_alert_rules_client_enabled ON alert_rules(client_id, enabled);
 
+            ALTER TABLE alert_rules ADD COLUMN IF NOT EXISTS slack_webhook_url TEXT;
+            ALTER TABLE alert_rules ADD COLUMN IF NOT EXISTS discord_webhook_url TEXT;
+            ALTER TABLE alert_rules ADD COLUMN IF NOT EXISTS webhook_url TEXT;
+
             CREATE TABLE IF NOT EXISTS alert_incidents (
                 id BIGSERIAL PRIMARY KEY,
                 rule_id BIGINT NOT NULL REFERENCES alert_rules(id) ON DELETE CASCADE,
@@ -93,9 +97,14 @@ export class AlertRepository {
     async createRule(rule) {
         const result = await this.postgres.query({
             text: `INSERT INTO alert_rules
-                (client_id, name, metric, operator, threshold, window_minutes, service_name, endpoint, severity, enabled, created_by)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
-            values: [rule.clientId, rule.name, rule.metric, rule.operator, rule.threshold, rule.windowMinutes, rule.serviceName, rule.endpoint, rule.severity, rule.enabled, rule.createdBy],
+                (client_id, name, metric, operator, threshold, window_minutes, service_name, endpoint, severity, enabled, created_by, slack_webhook_url, discord_webhook_url, webhook_url)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+            values: [
+                rule.clientId, rule.name, rule.metric, rule.operator, rule.threshold,
+                rule.windowMinutes, rule.serviceName, rule.endpoint, rule.severity,
+                rule.enabled, rule.createdBy, rule.slackWebhookUrl || null,
+                rule.discordWebhookUrl || null, rule.webhookUrl || null
+            ],
         });
         return result.rows[0];
     }
@@ -106,9 +115,20 @@ export class AlertRepository {
                 name = COALESCE($3, name), metric = COALESCE($4, metric), operator = COALESCE($5, operator),
                 threshold = COALESCE($6, threshold), window_minutes = COALESCE($7, window_minutes),
                 service_name = COALESCE($8, service_name), endpoint = COALESCE($9, endpoint),
-                severity = COALESCE($10, severity), enabled = COALESCE($11, enabled), updated_at = CURRENT_TIMESTAMP
+                severity = COALESCE($10, severity), enabled = COALESCE($11, enabled),
+                slack_webhook_url = COALESCE($12, slack_webhook_url),
+                discord_webhook_url = COALESCE($13, discord_webhook_url),
+                webhook_url = COALESCE($14, webhook_url),
+                updated_at = CURRENT_TIMESTAMP
                 WHERE id = $1 AND client_id = $2 RETURNING *`,
-            values: [id, clientId, changes.name, changes.metric, changes.operator, changes.threshold, changes.windowMinutes, changes.serviceName, changes.endpoint, changes.severity, changes.enabled],
+            values: [
+                id, clientId, changes.name, changes.metric, changes.operator,
+                changes.threshold, changes.windowMinutes, changes.serviceName,
+                changes.endpoint, changes.severity, changes.enabled,
+                changes.slackWebhookUrl !== undefined ? changes.slackWebhookUrl : null,
+                changes.discordWebhookUrl !== undefined ? changes.discordWebhookUrl : null,
+                changes.webhookUrl !== undefined ? changes.webhookUrl : null
+            ],
         });
         return result.rows[0] || null;
     }

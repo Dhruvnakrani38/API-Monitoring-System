@@ -20,5 +20,20 @@
 .resolved { background: rgba(198,239,104,0.14); color: #c6ef68 !important; }
 .empty { color: hsl(var(--muted-foreground)); font-size: 0.85rem; }
 
+.channelSection { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 0.4rem; padding-top: 0.75rem; border-top: 1px solid hsl(var(--border) / 0.5); }
+.channelTitle { font-size: 0.76rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: hsl(var(--foreground)); }
+.channelRow { display: flex; gap: 0.5rem; align-items: center; }
+.channelRow input { flex: 1; }
+.testButton { white-space: nowrap; padding: 0.55rem 0.75rem !important; font-size: 0.75rem !important; border: 1px solid hsl(var(--border)) !important; background: hsl(var(--muted) / 0.4) !important; color: hsl(var(--foreground)) !important; border-radius: 4px; cursor: pointer; }
+.testButton:hover { background: hsl(var(--muted)) !important; }
+.badgesRow { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.25rem; }
+.channelBadge { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.45rem; border-radius: 3px; text-transform: uppercase; }
+.badgeSlack { background: rgba(74, 21, 75, 0.2); color: #e01e5a; border: 1px solid rgba(224, 30, 90, 0.3); }
+.badgeDiscord { background: rgba(88, 101, 242, 0.2); color: #5865f2; border: 1px solid rgba(88, 101, 242, 0.3); }
+.badgeWebhook { background: rgba(108, 185, 201, 0.2); color: #6cb9c9; border: 1px solid rgba(108, 185, 201, 0.3); }
+.testFeedback { font-size: 0.75rem; font-weight: 600; }
+.testSuccess { color: #9bdc65; }
+.testError { color: #f07c6c; }
+
 @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .formRow { grid-template-columns: 1fr; } .incidentRow { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 640px) { .formRow { grid-template-columns: 1fr; } .incidentRow { align-items: flex-start; flex-direction: column; } .channelRow { flex-direction: column; align-items: stretch; } }

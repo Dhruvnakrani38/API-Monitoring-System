@@ -42,4 +42,15 @@ export class AlertController {
     async listIncidents(req, res, next) {
         try { const { clientId } = await this.resolveClientId(req); res.json(ResponseFormatter.success(await this.alertService.listIncidents(clientId, req.query.status), 'Alert incidents retrieved')); } catch (error) { next(error); }
     }
+
+    async testWebhook(req, res, next) {
+        try {
+            const { channel, url } = req.body;
+            if (!url) throw new AppError('Webhook URL is required', 400);
+            const result = await this.alertService.testWebhook({ channel, url });
+            res.json(ResponseFormatter.success(result, 'Test alert notification sent'));
+        } catch (error) {
+            next(error);
+        }
+    }
 }

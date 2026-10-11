@@ -5,14 +5,16 @@ import authContainer from '../../auth/Dependencies/dependencies.js';
 import { AlertRepository } from '../repository/AlertRepository.js';
 import { AlertService } from '../services/AlertService.js';
 import { AlertController } from '../controller/AlertController.js';
-import { AlertEvaluator } from '../services/AlertEvaluator.js';
+import { NotificationDispatcher } from '../services/NotificationDispatcher.js';
 import processorContainer from '../../processor/Dependencies/dependencies.js';
 
+const notificationDispatcher = new NotificationDispatcher();
 const alertRepository = new AlertRepository({ postgres, logger });
-const alertService = new AlertService({ repository: alertRepository });
+const alertService = new AlertService({ repository: alertRepository, notificationDispatcher });
 const alertEvaluator = new AlertEvaluator({
     alertRepository,
     metricsRepository: processorContainer.repositories.metricsRepository,
+    notificationDispatcher,
     logger,
 });
 const alertController = new AlertController({

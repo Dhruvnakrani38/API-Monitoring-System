@@ -11,5 +11,6 @@ router.post('/rules', (req, res, next) => alertController.createRule(req, res, n
 router.patch('/rules/:id', (req, res, next) => alertController.updateRule(req, res, next));
 router.delete('/rules/:id', (req, res, next) => alertController.deleteRule(req, res, next));
 router.get('/incidents', (req, res, next) => alertController.listIncidents(req, res, next));
+router.post('/test-webhook', (req, res, next) => alertController.testWebhook(req, res, next));
 
 export default router;
