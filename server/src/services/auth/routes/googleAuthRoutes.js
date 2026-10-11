@@ -74,31 +74,57 @@ if (googleEnabled) {
     passport.deserializeUser((user, done) => done(null, user));
 }
 
+const ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'https://api-monitoring-system-six.vercel.app',
+];
+
+const resolveFrontendOrigin = (targetUrl) => {
+    if (!targetUrl) return process.env.FRONTEND_URL || 'https://api-monitoring-system-six.vercel.app';
+    try {
+        const parsed = new URL(targetUrl);
+        const origin = parsed.origin;
+        if (ALLOWED_ORIGINS.includes(origin)) return origin;
+    } catch {
+        // invalid URL string, ignore
+    }
+    return process.env.FRONTEND_URL || 'https://api-monitoring-system-six.vercel.app';
+};
+
 // ── Route: Initiate Google Login ─────────────────────────────────────────
 router.get('/', (req, res, next) => {
     if (!googleEnabled) {
         return res.status(503).json({ success: false, message: 'Google OAuth is not configured on this server. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.' });
     }
-    passport.authenticate('google', { scope: ['profile', 'email'], session: false })(req, res, next);
+    const candidateReturnTo = req.query.return_to || req.headers.referer;
+    const frontendTarget = resolveFrontendOrigin(candidateReturnTo);
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        state: frontendTarget,
+        session: false,
+    })(req, res, next);
 });
 
 // ── Route: Google Callback ────────────────────────────────────────────────
 router.get('/callback', (req, res, next) => {
+    const frontendTarget = resolveFrontendOrigin(req.query.state);
+
     if (!googleEnabled) {
-        return res.redirect(`${FRONTEND_URL}/?google_error=not_configured`);
+        return res.redirect(`${frontendTarget}/?google_error=not_configured`);
     }
 
     passport.authenticate('google', { session: false, failWithError: true }, async (err, result) => {
         if (err || !result) {
             logger.error('Google OAuth callback error', err);
-            return res.redirect(`${FRONTEND_URL}/?google_error=${encodeURIComponent(err?.message || 'oauth_failed')}`);
+            return res.redirect(`${frontendTarget}/?google_error=${encodeURIComponent(err?.message || 'oauth_failed')}`);
         }
 
         const { user, pending, token } = result;
 
         if (pending || !token) {
             // New user — requires admin approval
-            return res.redirect(`${FRONTEND_URL}/?google_pending=1&email=${encodeURIComponent(user.email)}`);
+            return res.redirect(`${frontendTarget}/?google_pending=1&email=${encodeURIComponent(user.email)}`);
         }
 
         // Set httpOnly JWT cookie (same settings as regular login)
@@ -110,7 +136,7 @@ router.get('/callback', (req, res, next) => {
         });
 
         logger.info('Google OAuth login complete, redirecting to dashboard', { userId: user._id });
-        return res.redirect(`${FRONTEND_URL}/?google_auth=success`);
+        return res.redirect(`${frontendTarget}/?google_auth=success`);
     })(req, res, next);
 });
 

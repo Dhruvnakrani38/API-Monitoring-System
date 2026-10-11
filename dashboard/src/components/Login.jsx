@@ -62,8 +62,9 @@ function Login({ onLoginSuccess, onToggleSignup, onBack }) {
     };
 
     const handleGoogleSignIn = () => {
-        // Redirect to backend Google OAuth initiation route
-        window.location.href = `${API_ORIGIN}/api/auth/google`;
+        // Redirect to backend Google OAuth initiation route with explicit return target
+        const returnTarget = typeof window !== 'undefined' ? window.location.origin : '';
+        window.location.href = `${API_ORIGIN}/api/auth/google?return_to=${encodeURIComponent(returnTarget)}`;
     };
 
     return (
