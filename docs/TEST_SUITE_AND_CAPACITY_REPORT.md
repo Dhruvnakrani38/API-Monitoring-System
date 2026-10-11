@@ -122,14 +122,72 @@ xychart-beta
 
 ---
 
+## 5. Multi-Endpoint Stepped Telemetry Ingestion (Single Client — 1,000 Real Hits)
+
+To verify the end-to-end ingestion pipeline (`POST /api/hit` &rarr; RabbitMQ &rarr; Consumer &rarr; PostgreSQL & MongoDB &rarr; Dashboard Analytics), a dedicated multi-endpoint stepped benchmark was executed using [`scripts/client-stepped-test.mjs`](file:///c:/Users/dhruv/Downloads/project-screenshort/PluseWatch/API-Monitoring-System/scripts/client-stepped-test.mjs).
+
+- **Client Monitored:** `dhruv_nakrani's Client` (`6acb608cafe9346918f9a752`)
+- **API Key Used:** `apim_eebfd7753595177a3bd2cfde83004a2b65b95752`
+- **Volume Strategy:** Ramped by **+100 requests per stage** (100 &rarr; 200 &rarr; 300 &rarr; 400 requests), totaling **1,000 real telemetry events**.
+- **Distribution:** Evenly balanced across **10 distinct production microservice endpoints**.
+
+### 1. Stepped Ingestion Performance Matrix
+
+| Stage | Volume | Concurrency | Duration | Ingestion (RPS) | Avg Lat | p50 | p90 | p95 | p99 | Success Rate |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Stage 1** | 100 hits | 10 workers | 4.03s | **24.8 req/s** | 378ms | 313ms | 617ms | 690ms | 1,563ms | **100.0%** |
+| **Stage 2** | 200 hits | 20 workers | 3.58s | **55.9 req/s** | 344ms | 310ms | 414ms | 591ms | 667ms | **100.0%** |
+| **Stage 3** | 300 hits | 30 workers | 3.82s | **78.6 req/s** | 357ms | 319ms | 437ms | 615ms | 731ms | **100.0%** |
+| **Stage 4** | 400 hits | 40 workers | 3.81s | **105.1 req/s** 🏆 | 338ms | 309ms | 400ms | 585ms | 699ms | **100.0%** |
+
+```mermaid
+xychart-beta
+    title "Telemetry Ingestion Rate (RPS) vs Request Volume"
+    x-axis ["Stage 1 (100)", "Stage 2 (200)", "Stage 3 (300)", "Stage 4 (400)"]
+    y-axis "Ingestion Rate (RPS)" 0 --> 120
+    bar [24.8, 55.9, 78.6, 105.1]
+```
+
+### 2. Per-Endpoint Ingestion Breakdown (10 Distinct Endpoints)
+
+| Endpoint | Target Service | Hits Ingested | Average Latency | Status Profile |
+|---|---|:---:|:---:|:---:|
+| `POST /api/v1/orders/checkout` | `order-service` | **100** | 136ms | 201 Created / 400 / 500 |
+| `GET  /api/v1/orders` | `order-service` | **100** | 64ms | 200 OK |
+| `GET  /api/v1/orders/:id/track` | `order-service` | **100** | 45ms | 200 OK |
+| `GET  /api/v1/products` | `catalog-service` | **100** | 35ms | 200 OK |
+| `GET  /api/v1/products/:id` | `catalog-service` | **100** | 29ms | 200 OK |
+| `GET  /api/v1/categories` | `catalog-service` | **100** | 22ms | 200 OK |
+| `POST /api/v1/auth/login` | `auth-service` | **100** | 86ms | 200 OK / 401 |
+| `GET  /api/v1/auth/verify` | `auth-service` | **100** | 25ms | 200 OK |
+| `POST /api/v1/payments/charge` | `payment-service` | **100** | 210ms | 201 Created / 500 |
+| `POST /api/v1/notifications/email` | `notification-service` | **100** | 94ms | 201 Created |
+
+### 3. Live Dashboard Database Verification
+
+Direct query against `GET /api/analytics/dashboard?clientId=6acb608cafe9346918f9a752` verified that the telemetry pipeline successfully ingested and calculated all metrics:
+- **Total Hits Ingested:** `1,001`
+- **Unique Monitored Services:** `6`
+- **Unique Endpoints Tracked:** `193`
+- **Average Telemetry Latency:** `74.56 ms`
+- **Error Rate:** `2.3%`
+- **Uptime SLA:** `97.70%`
+
+---
+
 ## 6. How to Run the Tests Anytime
 
-### Run the Stepped Ramp-Up Load Test (+100 workers every 10s):
+### Run the Real Multi-Endpoint Stepped Ingestion Test (+100 per stage):
+```bash
+node scripts/client-stepped-test.mjs
+```
+
+### Run the Stepped Ramp-Up Capacity Test (+100 workers every 10s):
 ```bash
 node scripts/step-load-test.mjs --step-sec 10 --step-inc 100 --start-workers 100 --max-workers 500
 ```
 
-### Run the Full Functional Test Suite:
+### Run the Full Functional Test Suite (24 Tests):
 ```bash
 node scripts/tester-client.mjs
 ```
